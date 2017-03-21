@@ -1,0 +1,42 @@
+From 36583d93c85dd651398052344ace813ba3c06333 Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <chenxiaolong@cxl.epac.to>
+Date: Sun, 19 Mar 2017 16:14:14 -0400
+Subject: [PATCH 1/2] Revert "Fix read/write of bits USE_TYPO_METRICS and WWS
+ for OS2 version < 4"
+
+This reverts commit e870019c2602d50eb00793e979f3e11bcc71d6cf.
+---
+ fontforge/parsettf.c | 3 +--
+ fontforge/tottf.c    | 2 +-
+ 2 files changed, 2 insertions(+), 3 deletions(-)
+
+diff --git a/fontforge/parsettf.c b/fontforge/parsettf.c
+index 42a711107..60e703991 100644
+--- a/fontforge/parsettf.c
++++ b/fontforge/parsettf.c
+@@ -6283,8 +6283,7 @@ SplineFont *_SFReadTTF(FILE *ttf, int flags,enum openflags openflags, char *file
+     memset(&info,'\0',sizeof(struct ttfinfo));
+     info.onlystrikes = (flags&ttf_onlystrikes)?1:0;
+     info.onlyonestrike = (flags&ttf_onlyonestrike)?1:0;
+-    info.use_typo_metrics = false;
+-    info.weight_width_slope_only = false;
++    info.use_typo_metrics = true;
+     info.openflags = openflags;
+     info.fd = fd;
+     ret = readttf(ttf,&info,filename);
+diff --git a/fontforge/tottf.c b/fontforge/tottf.c
+index 14a4a3b36..4dd2627c2 100644
+--- a/fontforge/tottf.c
++++ b/fontforge/tottf.c
+@@ -3330,7 +3330,7 @@ static void setos2(struct os2 *os2,struct alltabs *at, SplineFont *sf,
+ 	os2->version = 3;
+     if ( sf->use_typo_metrics || sf->weight_width_slope_only )
+ 	os2->version = 4;
+-    if ( sf->os2_version > os2->version )
++    if ( sf->os2_version!=0 )
+ 	os2->version = sf->os2_version;
+     if (( format>=ff_ttf && format<=ff_otfdfont) && (at->gi.flags&ttf_flag_symbol))
+ 	modformat = ff_ttfsym;
+-- 
+2.12.0
+
