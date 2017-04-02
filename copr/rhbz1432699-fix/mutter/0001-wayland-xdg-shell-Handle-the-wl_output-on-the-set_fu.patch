@@ -1,0 +1,42 @@
+From 4ee272a5a88351a03619deae4e5dd4ab16f32b07 Mon Sep 17 00:00:00 2001
+From: Rui Matos <tiagomatos@gmail.com>
+Date: Wed, 2 Nov 2016 17:55:01 +0100
+Subject: [PATCH] wayland-xdg-shell: Handle the wl_output on the set_fullscreen
+ request
+
+This makes us fullscreen wayland windows on the requested monitor.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=772525
+---
+ src/wayland/meta-wayland-xdg-shell.c | 8 ++++++++
+ 1 file changed, 8 insertions(+)
+
+diff --git a/src/wayland/meta-wayland-xdg-shell.c b/src/wayland/meta-wayland-xdg-shell.c
+index 450acda..e1195c7 100644
+--- a/src/wayland/meta-wayland-xdg-shell.c
++++ b/src/wayland/meta-wayland-xdg-shell.c
+@@ -27,6 +27,7 @@
+ 
+ #include "core/window-private.h"
+ #include "wayland/meta-wayland.h"
++#include "wayland/meta-wayland-outputs.h"
+ #include "wayland/meta-wayland-popup.h"
+ #include "wayland/meta-wayland-private.h"
+ #include "wayland/meta-wayland-seat.h"
+@@ -363,6 +364,13 @@ xdg_toplevel_set_fullscreen (struct wl_client   *client,
+ {
+   MetaWaylandSurface *surface = surface_from_xdg_toplevel_resource (resource);
+ 
++  if (output_resource)
++    {
++      MetaWaylandOutput *output = wl_resource_get_user_data (output_resource);
++      if (output)
++        meta_window_move_to_monitor (surface->window, output->monitor_info->number);
++    }
++
+   meta_window_make_fullscreen (surface->window);
+ }
+ 
+-- 
+2.9.3
+

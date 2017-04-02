@@ -1,0 +1,27 @@
+From 0137c954f3eb130837dcba55c2e8f6c303ad33ab Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <andrewgunnerson@gmail.com>
+Date: Sun, 2 Apr 2017 17:09:55 -0400
+Subject: [PATCH] src/ui/frames.c: Fix infinite loop if style has multiple
+ variants
+
+Signed-off-by: Andrew Gunnerson <andrewgunnerson@gmail.com>
+---
+ src/ui/frames.c | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/src/ui/frames.c b/src/ui/frames.c
+index 6abe52e..e9f1653 100644
+--- a/src/ui/frames.c
++++ b/src/ui/frames.c
+@@ -181,7 +181,7 @@ update_style_contexts (MetaFrames *frames)
+   frames->normal_style = meta_theme_create_style_info (screen, NULL);
+ 
+   variants = g_hash_table_get_keys (frames->style_variants);
+-  for (variant = variants; variant; variant = variants->next)
++  for (variant = variants; variant; variant = variant->next)
+     {
+       style_info = meta_theme_create_style_info (screen, (char *)variant->data);
+       g_hash_table_insert (frames->style_variants,
+-- 
+2.9.3
+

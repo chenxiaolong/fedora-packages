@@ -1,0 +1,596 @@
+From 5bea406b353f39867eb86307b1c8b4093f22968e Mon Sep 17 00:00:00 2001
+From: Ray Strode <rstrode@redhat.com>
+Date: Tue, 18 Oct 2016 16:40:14 -0400
+Subject: [PATCH 1/4] native: only match drm subsystem devices
+
+Despite g_udev_client_new taking a list of subsystems, it doesn't
+implicitly filter results to those subsystems.
+
+This commit explicitly adds a subsystem match to make sure sound cards
+don't end up in the resulting list of video cards.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=771442
+---
+ src/backends/native/meta-launcher.c | 5 +++++
+ 1 file changed, 5 insertions(+)
+
+diff --git a/src/backends/native/meta-launcher.c b/src/backends/native/meta-launcher.c
+index ea28e5a..03a928a 100644
+--- a/src/backends/native/meta-launcher.c
++++ b/src/backends/native/meta-launcher.c
+@@ -268,60 +268,65 @@ sync_active (MetaLauncher *self)
+   self->session_active = active;
+ 
+   if (active)
+     session_unpause ();
+   else
+     session_pause ();
+ }
+ 
+ static void
+ on_active_changed (Login1Session *session,
+                    GParamSpec    *pspec,
+                    gpointer       user_data)
+ {
+   MetaLauncher *self = user_data;
+   sync_active (self);
+ }
+ 
+ static gchar *
+ get_primary_gpu_path (const gchar *seat_name)
+ {
+   const gchar *subsystems[] = {"drm", NULL};
+   gchar *path = NULL;
+   GList *devices, *tmp;
+ 
+   g_autoptr (GUdevClient) gudev_client = g_udev_client_new (subsystems);
+   g_autoptr (GUdevEnumerator) enumerator = g_udev_enumerator_new (gudev_client);
+ 
+   g_udev_enumerator_add_match_name (enumerator, "card*");
+   g_udev_enumerator_add_match_tag (enumerator, "seat");
+ 
++  /* We need to explicitly match the subsystem for now.
++   * https://bugzilla.gnome.org/show_bug.cgi?id=773224
++   */
++  g_udev_enumerator_add_match_subsystem (enumerator, "drm");
++
+   devices = g_udev_enumerator_execute (enumerator);
+   if (!devices)
+     goto out;
+ 
+   for (tmp = devices; tmp != NULL; tmp = tmp->next)
+     {
+       g_autoptr (GUdevDevice) platform_device = NULL;
+       g_autoptr (GUdevDevice) pci_device = NULL;
+       GUdevDevice *dev = tmp->data;
+       gint boot_vga;
+       const gchar *device_seat;
+ 
+       /* filter out devices that are not character device, like card0-VGA-1 */
+       if (g_udev_device_get_device_type (dev) != G_UDEV_DEVICE_TYPE_CHAR)
+         continue;
+ 
+       device_seat = g_udev_device_get_property (dev, "ID_SEAT");
+       if (!device_seat)
+         {
+           /* when ID_SEAT is not set, it means seat0 */
+           device_seat = "seat0";
+         }
+       else if (g_strcmp0 (device_seat, "seat0") != 0)
+         {
+           /* if the device has been explicitly assigned other seat
+            * than seat0, it is probably the right device to use */
+           path = g_strdup (g_udev_device_get_device_file (dev));
+           break;
+         }
+ 
+-- 
+2.10.1
+
+
+From d9dc6ac094080a4190508297e8244a8905a8dcb4 Mon Sep 17 00:00:00 2001
+From: Ray Strode <rstrode@redhat.com>
+Date: Wed, 19 Oct 2016 10:41:14 -0400
+Subject: [PATCH 2/4] native: shore up matching of card device
+
+Right now we accept any character device that matches the glob card*.
+
+That's fine, but we can be a little more specific by checking that
+the devtype is what we expect.
+
+This commit does that.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=771442
+---
+ src/backends/native/meta-launcher.c | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/src/backends/native/meta-launcher.c b/src/backends/native/meta-launcher.c
+index 03a928a..765e5ef 100644
+--- a/src/backends/native/meta-launcher.c
++++ b/src/backends/native/meta-launcher.c
+@@ -20,60 +20,62 @@
+ #include "config.h"
+ 
+ #include "meta-launcher.h"
+ 
+ #include <gio/gunixfdlist.h>
+ 
+ #include <clutter/clutter.h>
+ #include <clutter/egl/clutter-egl.h>
+ #include <clutter/evdev/clutter-evdev.h>
+ 
+ #include <sys/types.h>
+ #include <sys/stat.h>
+ #include <malloc.h>
+ #include <fcntl.h>
+ #include <errno.h>
+ #include <stdlib.h>
+ #include <string.h>
+ #include <unistd.h>
+ 
+ #include <systemd/sd-login.h>
+ #include <gudev/gudev.h>
+ 
+ #include "dbus-utils.h"
+ #include "meta-dbus-login1.h"
+ 
+ #include "backends/meta-backend-private.h"
+ #include "meta-cursor-renderer-native.h"
+ #include "meta-idle-monitor-native.h"
+ #include "meta-renderer-native.h"
+ 
++#define DRM_CARD_UDEV_DEVICE_TYPE "drm_minor"
++
+ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GUdevDevice, g_object_unref)
+ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GUdevClient, g_object_unref)
+ G_DEFINE_AUTOPTR_CLEANUP_FUNC(GUdevEnumerator, g_object_unref)
+ 
+ struct _MetaLauncher
+ {
+   Login1Session *session_proxy;
+   Login1Seat *seat_proxy;
+ 
+   gboolean session_active;
+ 
+   int kms_fd;
+ };
+ 
+ static Login1Session *
+ get_session_proxy (GCancellable *cancellable,
+                    GError      **error)
+ {
+   g_autofree char *proxy_path = NULL;
+   g_autofree char *session_id = NULL;
+   Login1Session *session_proxy;
+ 
+   if (sd_pid_get_session (getpid (), &session_id) < 0)
+     {
+       g_set_error (error,
+                    G_IO_ERROR,
+                    G_IO_ERROR_NOT_FOUND,
+                    "Could not get session ID: %m");
+       return NULL;
+     }
+@@ -283,66 +285,71 @@ on_active_changed (Login1Session *session,
+ }
+ 
+ static gchar *
+ get_primary_gpu_path (const gchar *seat_name)
+ {
+   const gchar *subsystems[] = {"drm", NULL};
+   gchar *path = NULL;
+   GList *devices, *tmp;
+ 
+   g_autoptr (GUdevClient) gudev_client = g_udev_client_new (subsystems);
+   g_autoptr (GUdevEnumerator) enumerator = g_udev_enumerator_new (gudev_client);
+ 
+   g_udev_enumerator_add_match_name (enumerator, "card*");
+   g_udev_enumerator_add_match_tag (enumerator, "seat");
+ 
+   /* We need to explicitly match the subsystem for now.
+    * https://bugzilla.gnome.org/show_bug.cgi?id=773224
+    */
+   g_udev_enumerator_add_match_subsystem (enumerator, "drm");
+ 
+   devices = g_udev_enumerator_execute (enumerator);
+   if (!devices)
+     goto out;
+ 
+   for (tmp = devices; tmp != NULL; tmp = tmp->next)
+     {
+       g_autoptr (GUdevDevice) platform_device = NULL;
+       g_autoptr (GUdevDevice) pci_device = NULL;
+       GUdevDevice *dev = tmp->data;
+       gint boot_vga;
++      const gchar *device_type;
+       const gchar *device_seat;
+ 
+       /* filter out devices that are not character device, like card0-VGA-1 */
+       if (g_udev_device_get_device_type (dev) != G_UDEV_DEVICE_TYPE_CHAR)
+         continue;
+ 
++      device_type = g_udev_device_get_property (dev, "DEVTYPE");
++      if (g_strcmp0 (device_type, DRM_CARD_UDEV_DEVICE_TYPE) != 0)
++        continue;
++
+       device_seat = g_udev_device_get_property (dev, "ID_SEAT");
+       if (!device_seat)
+         {
+           /* when ID_SEAT is not set, it means seat0 */
+           device_seat = "seat0";
+         }
+       else if (g_strcmp0 (device_seat, "seat0") != 0)
+         {
+           /* if the device has been explicitly assigned other seat
+            * than seat0, it is probably the right device to use */
+           path = g_strdup (g_udev_device_get_device_file (dev));
+           break;
+         }
+ 
+       /* skip devices that do not belong to our seat */
+       if (g_strcmp0 (seat_name, device_seat))
+         continue;
+ 
+       platform_device = g_udev_device_get_parent_with_subsystem (dev, "platform", NULL);
+       if (platform_device != NULL)
+         {
+           path = g_strdup (g_udev_device_get_device_file (dev));
+           break;
+         }
+ 
+       pci_device = g_udev_device_get_parent_with_subsystem (dev, "pci", NULL);
+       if (pci_device != NULL)
+         {
+           /* get value of boot_vga attribute or 0 if the device has no boot_vga */
+           boot_vga = g_udev_device_get_sysfs_attr_as_int (pci_device, "boot_vga");
+-- 
+2.10.1
+
+
+From 54ceafff8c8b0b02cd9124eae56a05da4f117033 Mon Sep 17 00:00:00 2001
+From: Ray Strode <rstrode@redhat.com>
+Date: Tue, 18 Oct 2016 16:43:04 -0400
+Subject: [PATCH 3/4] native: fail on systems with connectors spread across
+ multiple gpus
+
+We don't support using more than one GPU for output yet, so we should fail
+if we encounter that situation, so GDM will fall back to X.
+
+https://bugzilla.gnome.org/show_bug.cgi?id=771442
+---
+ src/backends/native/meta-launcher.c | 63 ++++++++++++++++++++++++++++++++++++-
+ 1 file changed, 62 insertions(+), 1 deletion(-)
+
+diff --git a/src/backends/native/meta-launcher.c b/src/backends/native/meta-launcher.c
+index 765e5ef..a2885a1 100644
+--- a/src/backends/native/meta-launcher.c
++++ b/src/backends/native/meta-launcher.c
+@@ -257,141 +257,202 @@ on_evdev_device_close (int      fd,
+ 
+ out:
+   close (fd);
+ }
+ 
+ static void
+ sync_active (MetaLauncher *self)
+ {
+   gboolean active = login1_session_get_active (LOGIN1_SESSION (self->session_proxy));
+ 
+   if (active == self->session_active)
+     return;
+ 
+   self->session_active = active;
+ 
+   if (active)
+     session_unpause ();
+   else
+     session_pause ();
+ }
+ 
+ static void
+ on_active_changed (Login1Session *session,
+                    GParamSpec    *pspec,
+                    gpointer       user_data)
+ {
+   MetaLauncher *self = user_data;
+   sync_active (self);
+ }
+ 
++static guint
++count_devices_with_connectors (const gchar *seat_name,
++                               GList       *devices)
++{
++  g_autoptr (GHashTable) cards = NULL;
++  GList *tmp;
++
++  cards = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_object_unref);
++  for (tmp = devices; tmp != NULL; tmp = tmp->next)
++    {
++      GUdevDevice *device = tmp->data;
++      g_autoptr (GUdevDevice) parent_device = NULL;
++      const gchar *parent_device_type = NULL;
++      const gchar *card_seat;
++
++      /* filter out the real card devices, we only care about the connectors */
++      if (g_udev_device_get_device_type (device) != G_UDEV_DEVICE_TYPE_NONE)
++        continue;
++
++      /* only connectors have a modes attribute */
++      if (!g_udev_device_has_sysfs_attr (device, "modes"))
++        continue;
++
++      parent_device = g_udev_device_get_parent (device);
++
++      if (g_udev_device_get_device_type (parent_device) == G_UDEV_DEVICE_TYPE_CHAR)
++        parent_device_type = g_udev_device_get_property (parent_device, "DEVTYPE");
++
++      if (g_strcmp0 (parent_device_type, DRM_CARD_UDEV_DEVICE_TYPE) != 0)
++        continue;
++
++      card_seat = g_udev_device_get_property (parent_device, "ID_SEAT");
++
++      if (!card_seat)
++        card_seat = "seat0";
++
++      if (g_strcmp0 (seat_name, card_seat) != 0)
++        continue;
++
++      g_hash_table_insert (cards,
++                           (gpointer) g_udev_device_get_name (parent_device),
++                           g_steal_pointer (&parent_device));
++    }
++
++  return g_hash_table_size (cards);
++}
++
+ static gchar *
+ get_primary_gpu_path (const gchar *seat_name)
+ {
+   const gchar *subsystems[] = {"drm", NULL};
+   gchar *path = NULL;
+   GList *devices, *tmp;
+ 
+   g_autoptr (GUdevClient) gudev_client = g_udev_client_new (subsystems);
+   g_autoptr (GUdevEnumerator) enumerator = g_udev_enumerator_new (gudev_client);
+ 
+   g_udev_enumerator_add_match_name (enumerator, "card*");
+   g_udev_enumerator_add_match_tag (enumerator, "seat");
+ 
+   /* We need to explicitly match the subsystem for now.
+    * https://bugzilla.gnome.org/show_bug.cgi?id=773224
+    */
+   g_udev_enumerator_add_match_subsystem (enumerator, "drm");
+ 
+   devices = g_udev_enumerator_execute (enumerator);
+   if (!devices)
+     goto out;
+ 
++  /* For now, fail on systems where some of the connectors
++   * are connected to secondary gpus.
++   *
++   * https://bugzilla.gnome.org/show_bug.cgi?id=771442
++   */
++  if (g_getenv ("MUTTER_ALLOW_HYBRID_GPUS") == NULL)
++    {
++      guint num_devices;
++
++      num_devices = count_devices_with_connectors (seat_name, devices);
++      if (num_devices != 1)
++        goto out;
++    }
++
+   for (tmp = devices; tmp != NULL; tmp = tmp->next)
+     {
+       g_autoptr (GUdevDevice) platform_device = NULL;
+       g_autoptr (GUdevDevice) pci_device = NULL;
+       GUdevDevice *dev = tmp->data;
+       gint boot_vga;
+       const gchar *device_type;
+       const gchar *device_seat;
+ 
+       /* filter out devices that are not character device, like card0-VGA-1 */
+       if (g_udev_device_get_device_type (dev) != G_UDEV_DEVICE_TYPE_CHAR)
+         continue;
+ 
+       device_type = g_udev_device_get_property (dev, "DEVTYPE");
+       if (g_strcmp0 (device_type, DRM_CARD_UDEV_DEVICE_TYPE) != 0)
+         continue;
+ 
+       device_seat = g_udev_device_get_property (dev, "ID_SEAT");
+       if (!device_seat)
+         {
+           /* when ID_SEAT is not set, it means seat0 */
+           device_seat = "seat0";
+         }
+       else if (g_strcmp0 (device_seat, "seat0") != 0)
+         {
+           /* if the device has been explicitly assigned other seat
+            * than seat0, it is probably the right device to use */
+           path = g_strdup (g_udev_device_get_device_file (dev));
+           break;
+         }
+ 
+       /* skip devices that do not belong to our seat */
+       if (g_strcmp0 (seat_name, device_seat))
+         continue;
+ 
+       platform_device = g_udev_device_get_parent_with_subsystem (dev, "platform", NULL);
+       if (platform_device != NULL)
+         {
+           path = g_strdup (g_udev_device_get_device_file (dev));
+           break;
+         }
+ 
+       pci_device = g_udev_device_get_parent_with_subsystem (dev, "pci", NULL);
+       if (pci_device != NULL)
+         {
+           /* get value of boot_vga attribute or 0 if the device has no boot_vga */
+           boot_vga = g_udev_device_get_sysfs_attr_as_int (pci_device, "boot_vga");
+           if (boot_vga == 1)
+             {
+               /* found the boot_vga device */
+               path = g_strdup (g_udev_device_get_device_file (dev));
+               break;
+             }
+         }
+     }
+ 
++out:
+   g_list_free_full (devices, g_object_unref);
+ 
+-out:
+   return path;
+ }
+ 
+ static gboolean
+ get_kms_fd (Login1Session *session_proxy,
+             const gchar   *seat_id,
+             int           *fd_out,
+             GError       **error)
+ {
+   int major, minor;
+   int fd;
+ 
+   g_autofree gchar *path = get_primary_gpu_path (seat_id);
+   if (!path)
+     {
+       g_set_error (error,
+                    G_IO_ERROR,
+                    G_IO_ERROR_NOT_FOUND,
+                    "could not find drm kms device");
+       return FALSE;
+     }
+ 
+   if (!get_device_info_from_path (path, &major, &minor))
+     {
+       g_set_error (error,
+                    G_IO_ERROR,
+                    G_IO_ERROR_NOT_FOUND,
+                    "Could not get device info for path %s: %m", path);
+       return FALSE;
+     }
+-- 
+2.10.1
+
+
+From 0d87baa029329c409646e04bcf40bea5da67b5f7 Mon Sep 17 00:00:00 2001
+From: Ray Strode <rstrode@redhat.com>
+Date: Wed, 19 Oct 2016 14:27:24 -0400
+Subject: [PATCH 4/4] native: don't call steal_pointer prematurely
+
+commit e2bfaf07514ed633f8721b5f521577685b6cccc0 does this:
+
+g_hash_table_insert (cards,
+                     g_udev_device_get_name (parent_device),
+                     g_steal_pointer (&parent_device));
+
+The problem is the g_steal_pointer call may happen before the
+g_udev_device_get_name call leading to a crash.
+
+This commit does the get_name call on an earlier line
+
+https://bugzilla.gnome.org/show_bug.cgi?id=771442
+---
+ src/backends/native/meta-launcher.c | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/src/backends/native/meta-launcher.c b/src/backends/native/meta-launcher.c
+index a2885a1..ddb7080 100644
+--- a/src/backends/native/meta-launcher.c
++++ b/src/backends/native/meta-launcher.c
+@@ -270,88 +270,90 @@ sync_active (MetaLauncher *self)
+   self->session_active = active;
+ 
+   if (active)
+     session_unpause ();
+   else
+     session_pause ();
+ }
+ 
+ static void
+ on_active_changed (Login1Session *session,
+                    GParamSpec    *pspec,
+                    gpointer       user_data)
+ {
+   MetaLauncher *self = user_data;
+   sync_active (self);
+ }
+ 
+ static guint
+ count_devices_with_connectors (const gchar *seat_name,
+                                GList       *devices)
+ {
+   g_autoptr (GHashTable) cards = NULL;
+   GList *tmp;
+ 
+   cards = g_hash_table_new_full (g_str_hash, g_str_equal, NULL, g_object_unref);
+   for (tmp = devices; tmp != NULL; tmp = tmp->next)
+     {
+       GUdevDevice *device = tmp->data;
+       g_autoptr (GUdevDevice) parent_device = NULL;
+       const gchar *parent_device_type = NULL;
++      const gchar *parent_device_name = NULL;
+       const gchar *card_seat;
+ 
+       /* filter out the real card devices, we only care about the connectors */
+       if (g_udev_device_get_device_type (device) != G_UDEV_DEVICE_TYPE_NONE)
+         continue;
+ 
+       /* only connectors have a modes attribute */
+       if (!g_udev_device_has_sysfs_attr (device, "modes"))
+         continue;
+ 
+       parent_device = g_udev_device_get_parent (device);
+ 
+       if (g_udev_device_get_device_type (parent_device) == G_UDEV_DEVICE_TYPE_CHAR)
+         parent_device_type = g_udev_device_get_property (parent_device, "DEVTYPE");
+ 
+       if (g_strcmp0 (parent_device_type, DRM_CARD_UDEV_DEVICE_TYPE) != 0)
+         continue;
+ 
+       card_seat = g_udev_device_get_property (parent_device, "ID_SEAT");
+ 
+       if (!card_seat)
+         card_seat = "seat0";
+ 
+       if (g_strcmp0 (seat_name, card_seat) != 0)
+         continue;
+ 
++      parent_device_name = g_udev_device_get_name (parent_device);
+       g_hash_table_insert (cards,
+-                           (gpointer) g_udev_device_get_name (parent_device),
++                           (gpointer) parent_device_name ,
+                            g_steal_pointer (&parent_device));
+     }
+ 
+   return g_hash_table_size (cards);
+ }
+ 
+ static gchar *
+ get_primary_gpu_path (const gchar *seat_name)
+ {
+   const gchar *subsystems[] = {"drm", NULL};
+   gchar *path = NULL;
+   GList *devices, *tmp;
+ 
+   g_autoptr (GUdevClient) gudev_client = g_udev_client_new (subsystems);
+   g_autoptr (GUdevEnumerator) enumerator = g_udev_enumerator_new (gudev_client);
+ 
+   g_udev_enumerator_add_match_name (enumerator, "card*");
+   g_udev_enumerator_add_match_tag (enumerator, "seat");
+ 
+   /* We need to explicitly match the subsystem for now.
+    * https://bugzilla.gnome.org/show_bug.cgi?id=773224
+    */
+   g_udev_enumerator_add_match_subsystem (enumerator, "drm");
+ 
+   devices = g_udev_enumerator_execute (enumerator);
+   if (!devices)
+     goto out;
+ 
+   /* For now, fail on systems where some of the connectors
+    * are connected to secondary gpus.
+-- 
+2.10.1
+
