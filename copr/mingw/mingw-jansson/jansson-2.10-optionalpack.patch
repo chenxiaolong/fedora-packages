@@ -1,0 +1,156 @@
+From 28666cead0a4c946b234d42f25b8a9db81f9bbdf Mon Sep 17 00:00:00 2001
+From: Nathaniel McCallum <npmccallum@redhat.com>
+Date: Tue, 18 Apr 2017 11:05:38 -0400
+Subject: [PATCH] Enable optional object/array members in json_pack()
+
+---
+ doc/apiref.rst              | 23 ++++++++++++++++++++++-
+ src/pack_unpack.c           | 19 ++++++++++++++++++-
+ test/suites/api/test_pack.c | 24 ++++++++++++++++++++++++
+ 3 files changed, 64 insertions(+), 2 deletions(-)
+
+diff --git a/doc/apiref.rst b/doc/apiref.rst
+index bec4088..703261e 100644
+--- a/doc/apiref.rst
++++ b/doc/apiref.rst
+@@ -1269,6 +1269,14 @@ arguments.
+ 
+     .. versionadded:: 2.8
+ 
++``s*`` (string) [const char \*]
++    Like ``s``, but if the argument is *NULL*, do not output any value.
++    This format can only be used inside an object or an array. If used
++    inside an object, the corresponding key is additionally suppressed
++    when the value is omitted. See below for an example.
++
++    .. versionadded:: 2.11
++
+ ``s#`` (string) [const char \*, int]
+     Convert a UTF-8 buffer of a given length to a JSON string.
+ 
+@@ -1324,11 +1332,20 @@ arguments.
+     yourself.
+ 
+ ``o?``, ``O?`` (any value) [json_t \*]
+-    Like ``o`` and ``O?``, respectively, but if the argument is
++    Like ``o`` and ``O``, respectively, but if the argument is
+     *NULL*, output a JSON null value.
+ 
+     .. versionadded:: 2.8
+ 
++``o*``, ``O*`` (any value) [json_t \*]
++    Like ``o`` and ``O``, respectively, but if the argument is
++    *NULL*, do not output any value. This format can only be used
++    inside an object or an array. If used inside an object, the
++    corresponding key is additionally suppressed. See below for an
++    example.
++
++    .. versionadded:: 2.11
++
+ ``[fmt]`` (array)
+     Build an array with contents from the inner format string. ``fmt``
+     may contain objects and arrays, i.e. recursive value building is
+@@ -1387,6 +1404,10 @@ More examples::
+   /* Concatenate strings together to build the JSON string "foobarbaz" */
+   json_pack("s++", "foo", "bar", "baz");
+ 
++  /* Create an empty object or array when optional members are missing */
++  json_pack("{s:s*,s:o*,s:O*}", "foo", NULL, "bar", NULL, "baz", NULL);
++  json_pack("[s*,o*,O*]", NULL, NULL, NULL);
++
+ 
+ .. _apiref-unpack:
+ 
+diff --git a/src/pack_unpack.c b/src/pack_unpack.c
+index 2a2da35..4c0c04c 100644
+--- a/src/pack_unpack.c
++++ b/src/pack_unpack.c
+@@ -235,6 +235,12 @@ static json_t *pack_object(scanner_t *s, va_list *ap)
+             if(ours)
+                 jsonp_free(key);
+ 
++            if(strchr("soO", token(s)) && s->next_token.token == '*') {
++                next_token(s);
++                next_token(s);
++                continue;
++            }
++
+             goto error;
+         }
+ 
+@@ -249,6 +255,8 @@ static json_t *pack_object(scanner_t *s, va_list *ap)
+         if(ours)
+             jsonp_free(key);
+ 
++        if(strchr("soO", token(s)) && s->next_token.token == '*')
++            next_token(s);
+         next_token(s);
+     }
+ 
+@@ -273,14 +281,23 @@ static json_t *pack_array(scanner_t *s, va_list *ap)
+         }
+ 
+         value = pack(s, ap);
+-        if(!value)
++        if(!value) {
++            if(strchr("soO", token(s)) && s->next_token.token == '*') {
++                next_token(s);
++                next_token(s);
++                continue;
++            }
++
+             goto error;
++        }
+ 
+         if(json_array_append_new(array, value)) {
+             set_error(s, "<internal>", "Unable to append to array");
+             goto error;
+         }
+ 
++        if(strchr("soO", token(s)) && s->next_token.token == '*')
++            next_token(s);
+         next_token(s);
+     }
+     return array;
+diff --git a/test/suites/api/test_pack.c b/test/suites/api/test_pack.c
+index 798a057..65783b1 100644
+--- a/test/suites/api/test_pack.c
++++ b/test/suites/api/test_pack.c
+@@ -240,6 +240,18 @@ static void run_tests()
+         fail("json_pack object refcount failed");
+     json_decref(value);
+ 
++    /* object with optional members */
++    value = json_pack("{s:s,s:o,s:O}", "a", NULL, "b", NULL, "c", NULL);
++    if(value)
++        fail("json_pack object optional incorrectly succeeded");
++    value = json_pack("{s:**}", "a", NULL);
++    if(value)
++        fail("json_pack object optional invalid incorrectly succeeded");
++    value = json_pack("{s:s*,s:o*,s:O*}", "a", NULL, "b", NULL, "c", NULL);
++    if(!json_is_object(value) || json_object_size(value) != 0)
++        fail("json_pack object optional failed");
++    json_decref(value);
++
+     /* simple array */
+     value = json_pack("[i,i,i]", 0, 1, 2);
+     if(!json_is_array(value) || json_array_size(value) != 3)
+@@ -253,6 +265,18 @@ static void run_tests()
+     }
+     json_decref(value);
+ 
++    /* simple array with optional members */
++    value = json_pack("[s,o,O]", NULL, NULL, NULL);
++    if(value)
++        fail("json_pack array optional incorrectly succeeded");
++    value = json_pack("[**]", NULL);
++    if(value)
++        fail("json_pack array optional invalid incorrectly succeeded");
++    value = json_pack("[s*,o*,O*]", NULL, NULL, NULL);
++    if(!json_is_array(value) || json_array_size(value) != 0)
++        fail("json_pack array optional failed");
++    json_decref(value);
++
+     /* Whitespace; regular string */
+     value = json_pack(" s ", "test");
+     if(!json_is_string(value) || strcmp("test", json_string_value(value)))
