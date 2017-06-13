@@ -1,0 +1,34 @@
+From 62466cfccad1a4fe3f59a2c33104c40adc01b4fe Mon Sep 17 00:00:00 2001
+From: Jonathan Wakely <jwakely@redhat.com>
+Date: Fri, 23 Dec 2016 01:56:14 +0000
+Subject: [PATCH] Stop TestInfo::Run() calling a function through null pointer
+
+If the object was never created then trying to call &Test::DeleteSelf_
+will dereference a null pointer, with undefined behaviour.
+
+Fixes #845
+---
+ googletest/src/gtest.cc | 10 ++++++----
+ 1 file changed, 6 insertions(+), 4 deletions(-)
+
+diff --git a/googletest/src/gtest.cc b/googletest/src/gtest.cc
+index d882ab2..1fb05ea 100644
+--- a/googletest/src/gtest.cc
++++ b/googletest/src/gtest.cc
+@@ -2656,10 +2656,12 @@ void TestInfo::Run() {
+     test->Run();
+   }
+ 
+-  // Deletes the test object.
+-  impl->os_stack_trace_getter()->UponLeavingGTest();
+-  internal::HandleExceptionsInMethodIfSupported(
+-      test, &Test::DeleteSelf_, "the test fixture's destructor");
++  if (test != NULL) {
++    // Deletes the test object.
++    impl->os_stack_trace_getter()->UponLeavingGTest();
++    internal::HandleExceptionsInMethodIfSupported(
++        test, &Test::DeleteSelf_, "the test fixture's destructor");
++  }
+ 
+   result_.set_elapsed_time(internal::GetTimeInMillis() - start);
+ 

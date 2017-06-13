@@ -1,0 +1,28 @@
+From a138385e48ee755ab8d124d6090c05580c8e9342 Mon Sep 17 00:00:00 2001
+From: Daniele Tamino <daniele.tamino@gmail.com>
+Date: Mon, 22 Feb 2016 13:08:19 -0800
+Subject: [PATCH 2/2] Don't use pthread when on MinGW even if available
+
+It's not supported, and native Windows threading is available for MinGW
+---
+ googletest/cmake/internal_utils.cmake | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/googletest/cmake/internal_utils.cmake b/googletest/cmake/internal_utils.cmake
+index 93e6dbb..814fa56 100644
+--- a/googletest/cmake/internal_utils.cmake
++++ b/googletest/cmake/internal_utils.cmake
+@@ -46,7 +46,9 @@ endmacro()
+ # Google Mock.  You can tweak these definitions to suit your need.  A
+ # variable's value is empty before it's explicitly assigned to.
+ macro(config_compiler_and_linker)
+-  if (NOT gtest_disable_pthreads)
++  # Note: pthreads on MinGW is not supported, even if available
++  # instead, we use windows threading primitives
++  if (NOT gtest_disable_pthreads AND NOT MINGW)
+     # Defines CMAKE_USE_PTHREADS_INIT and CMAKE_THREAD_LIBS_INIT.
+     find_package(Threads)
+   endif()
+-- 
+2.9.4
+

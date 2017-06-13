@@ -1,0 +1,43 @@
+From 91d34329d15d0bcc3f90456343f452f494edaebb Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <chenxiaolong@cxl.epac.to>
+Date: Mon, 12 Jun 2017 21:19:20 -0400
+Subject: [PATCH 2/2] Install DLLs to correct directory
+
+---
+ googlemock/CMakeLists.txt | 4 +++-
+ googletest/CMakeLists.txt | 4 +++-
+ 2 files changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/googlemock/CMakeLists.txt b/googlemock/CMakeLists.txt
+index 58af732..4c66bd5 100644
+--- a/googlemock/CMakeLists.txt
++++ b/googlemock/CMakeLists.txt
+@@ -107,7 +107,9 @@ endif()
+ #
+ # Install rules
+ install(TARGETS gmock gmock_main
+-  DESTINATION lib)
++  RUNTIME DESTINATION bin
++  LIBRARY DESTINATION lib
++  ARCHIVE DESTINATION lib)
+ install(DIRECTORY ${gmock_SOURCE_DIR}/include/gmock
+   DESTINATION include)
+ 
+diff --git a/googletest/CMakeLists.txt b/googletest/CMakeLists.txt
+index d79a908..b3a18e8 100644
+--- a/googletest/CMakeLists.txt
++++ b/googletest/CMakeLists.txt
+@@ -106,7 +106,9 @@ endif()
+ #
+ # Install rules
+ install(TARGETS gtest gtest_main
+-  DESTINATION lib)
++  RUNTIME DESTINATION bin
++  LIBRARY DESTINATION lib
++  ARCHIVE DESTINATION lib)
+ install(DIRECTORY ${gtest_SOURCE_DIR}/include/gtest
+   DESTINATION include)
+ 
+-- 
+2.9.4
+
