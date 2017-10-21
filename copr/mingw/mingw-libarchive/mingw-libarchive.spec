@@ -2,7 +2,7 @@
 
 Name:           mingw-libarchive
 Version:        3.3.1
-Release:        1.1%{?dist}
+Release:        2.1%{?dist}
 Summary:        MinGW package for handling streaming archive formats
 
 License:        BSD
@@ -205,8 +205,11 @@ rm -r $RPM_BUILD_ROOT/%{mingw64_prefix}/share
 
 
 %changelog
-* Sun Jun 11 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 3.3.1-1.1
+* Fri Oct 20 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 3.3.1-2.1
 - Enable LZ4 support
+
+* Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 3.3.1-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
 
 * Sun Jun 04 2017 Michael Cronenworth <mike@cchtml.com> - 3.3.1-1
 - Update to 3.3.1
