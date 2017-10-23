@@ -1,14 +1,14 @@
 
 Name:           qgnomeplatform
 Version:        0.3
-Release:        5.1%{?dist}
+Release:        5.2%{?dist}
 Summary:        Qt Platform Theme aimed to accommodate Gnome settings
 
 License:        LGPLv2+
 URL:            https://github.com/MartinBriza/QGnomePlatform
 Source0:        https://github.com/MartinBriza/QGnomePlatform/archive/%{version}/QGnomePlatform-%{version}.tar.gz
 
-Patch0:         https://github.com/chenxiaolong/QGnomePlatform/commit/021ee8699aa76ca4f74d206b848ae289487b96a5.patch
+Patch0:         https://github.com/MartinBriza/QGnomePlatform/commit/e2acf8fa16775e3a232332a37732868ae994be86.patch
 
 # Upstream patches
 
@@ -57,6 +57,10 @@ make install INSTALL_ROOT=%{buildroot} -C %{_target_platform}
 
 
 %changelog
+* Mon Oct 23 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.3-5.2
+- Switch to better patch that doesn't require initializing QGnomeTheme
+- https://github.com/MartinBriza/QGnomePlatform/pull/30
+
 * Sun Oct 22 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.3-5.1
 - Add patch for AppIndicator support
 - https://github.com/MartinBriza/QGnomePlatform/pull/29
