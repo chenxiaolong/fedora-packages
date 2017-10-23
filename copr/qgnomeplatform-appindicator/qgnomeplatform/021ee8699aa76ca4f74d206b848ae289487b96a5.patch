@@ -1,0 +1,73 @@
+From 021ee8699aa76ca4f74d206b848ae289487b96a5 Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <chenxiaolong@cxl.epac.to>
+Date: Sun, 22 Oct 2017 21:18:03 -0400
+Subject: [PATCH] Use QPlatformSystemTrayIcon from QGnomeTheme
+
+Signed-off-by: Andrew Gunnerson <chenxiaolong@cxl.epac.to>
+---
+ src/qgnomeplatformtheme.cpp | 9 +++++++--
+ src/qgnomeplatformtheme.h   | 3 ++-
+ 2 files changed, 9 insertions(+), 3 deletions(-)
+
+diff --git a/src/qgnomeplatformtheme.cpp b/src/qgnomeplatformtheme.cpp
+index d8210b3..81e5f13 100644
+--- a/src/qgnomeplatformtheme.cpp
++++ b/src/qgnomeplatformtheme.cpp
+@@ -24,6 +24,8 @@
+ #include <QApplication>
+ #include <QStyleFactory>
+ 
++#include <QtThemeSupport/private/qgenericunixthemes_p.h>
++
+ QGnomePlatformTheme::QGnomePlatformTheme()
+ {
+     loadSettings();
+@@ -33,11 +35,14 @@ QGnomePlatformTheme::QGnomePlatformTheme()
+      */
+     g_type_ensure(PANGO_TYPE_FONT_FAMILY);
+     g_type_ensure(PANGO_TYPE_FONT_FACE);
++
++    m_gnome_theme = new QGnomeTheme;
+ }
+ 
+ QGnomePlatformTheme::~QGnomePlatformTheme()
+ {
+     delete m_hints;
++    delete m_gnome_theme;
+ }
+ 
+ QVariant QGnomePlatformTheme::themeHint(QPlatformTheme::ThemeHint hintType) const
+@@ -95,10 +100,10 @@ QPlatformDialogHelper *QGnomePlatformTheme::createPlatformDialogHelper(QPlatform
+     }
+ }
+ 
+-#ifndef QT_NO_SYSTEMTRAYICON
++#if !defined(QT_NO_DBUS) && !defined(QT_NO_SYSTEMTRAYICON)
+ QPlatformSystemTrayIcon * QGnomePlatformTheme::createPlatformSystemTrayIcon() const
+ {
+-    return nullptr;
++    return m_gnome_theme->createPlatformSystemTrayIcon();
+ }
+ #endif
+ 
+diff --git a/src/qgnomeplatformtheme.h b/src/qgnomeplatformtheme.h
+index 6f7d180..e2f6433 100644
+--- a/src/qgnomeplatformtheme.h
++++ b/src/qgnomeplatformtheme.h
+@@ -37,7 +37,7 @@ class QGnomePlatformTheme : public QPlatformTheme
+     const QPalette *palette(Palette type = SystemPalette) const Q_DECL_OVERRIDE;
+     bool usePlatformNativeDialog(DialogType type) const Q_DECL_OVERRIDE;
+     QPlatformDialogHelper *createPlatformDialogHelper(DialogType type) const Q_DECL_OVERRIDE;
+-#ifndef QT_NO_SYSTEMTRAYICON
++#if !defined(QT_NO_DBUS) && !defined(QT_NO_SYSTEMTRAYICON)
+     virtual QPlatformSystemTrayIcon *createPlatformSystemTrayIcon() const;
+ #endif
+ 
+@@ -45,6 +45,7 @@ class QGnomePlatformTheme : public QPlatformTheme
+     void loadSettings();
+ 
+     GnomeHintsSettings *m_hints;
++    QPlatformTheme *m_gnome_theme;
+ };
+ 
+ #endif // QGNOME_PLATFORM_THEME_HH
