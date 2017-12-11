@@ -5,9 +5,9 @@ prompt = no
 x509_extensions = myexts
 
 [ req_distinguished_name ]
-O = CXL
-CN = CXL kernel signing key
-emailAddress = andrewgunnerson@gmail.com
+O = Fedora
+CN = Fedora kernel signing key
+emailAddress = kernel-team@fedoraproject.org
 
 [ myexts ]
 basicConstraints=critical,CA:FALSE
