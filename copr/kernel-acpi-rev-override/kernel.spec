@@ -25,6 +25,7 @@ Summary: The Linux kernel
 %endif
 
 # define buildid .local
+%define buildid .1.acpi_rev_override
 
 # baserelease defines which build revision of this kernel version we're
 # building.  We used to call this fedora_build, but the magical name
@@ -2290,6 +2291,9 @@ fi
 #
 #
 %changelog
+* Tue Dec 5 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.13.16-302.1.acpi_rev_override
+- Enable CONFIG_ACPI_REV_OVERRIDE_POSSIBLE
+
 * Thu Nov 30 2017 Jeremy Cline <jeremy@jcline.org> - 4.13.16-302
 - Fix CVE-2017-1000405 (rhbz 1516514 1519115)
 
