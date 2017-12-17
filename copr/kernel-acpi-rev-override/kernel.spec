@@ -55,7 +55,7 @@ Summary: The Linux kernel
 %if 0%{?released_kernel}
 
 # Do we have a -stable update to apply?
-%define stable_update 3
+%define stable_update 5
 # Set rpm version accordingly
 %if 0%{?stable_update}
 %define stablerev %{stable_update}
@@ -604,9 +604,6 @@ Patch307: arm64-Add-option-of-13-for-FORCE_MAX_ZONEORDER.patch
 # https://patchwork.kernel.org/patch/9820417/
 Patch310: qcom-msm89xx-fixes.patch
 
-# https://patchwork.kernel.org/patch/10054387/
-Patch311: USB-ulpi-fix-bus-node-lookup.patch
-
 # Fix USB on the RPi https://patchwork.kernel.org/patch/9879371/
 Patch321: bcm283x-dma-mapping-skip-USB-devices-when-configuring-DMA-during-probe.patch
 
@@ -623,6 +620,8 @@ Patch331: PCI-aspm-deal-with-missing-root-ports-in-link-state-handling.patch
 Patch332: arm64-socionext-96b-enablement.patch
 
 Patch335: arm-exynos-fix-usb3.patch
+
+Patch399: arm64-thunderX-fix-ipv6-checksum-offload.patch
 
 # 400 - IBM (ppc/s390x) patches
 
@@ -646,16 +645,11 @@ Patch619: input-rmi4-remove-the-need-for-artifical-IRQ.patch
 # Headed upstream
 Patch621: drm-i915-Boost-GPU-clocks-if-we-miss-the-pageflip-s-vblank.patch
 
-Patch623: 0001-PATCH-staging-rtl8822be-fix-wrong-dma-unmap-len.patch
-
 # rhbz 1509461
 Patch625: v3-2-2-Input-synaptics---Lenovo-X1-Carbon-5-should-use-SMBUS-RMI.patch
 
 # Fixes for QXL issues
 Patch627: qxl-fixes.patch
-
-# CVE-2017-1000405 rhbz 1516514 1519115
-Patch628: 0001-mm-thp-Do-not-make-page-table-dirty-unconditionally-.patch
 
 # END OF PATCH DEFINITIONS
 
@@ -2211,8 +2205,17 @@ fi
 #
 #
 %changelog
-* Mon Dec 11 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.14.3-300.1.acpi_rev_override
+* Sun Dec 17 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.14.5-300.1.acpi_rev_override
 - Enable CONFIG_ACPI_REV_OVERRIDE_POSSIBLE
+
+* Mon Dec 11 2017 Jeremy Cline <jeremy@jcline.org> - 4.14.5-300
+- Linux v4.14.5
+- Re-enable driver for the Behringer BCD 2000
+
+* Wed Dec  6 2017 Peter Robinson <pbrobinson@fedoraproject.org> 4.14.4-300
+- Linux v4.14.4
+- Fixes for dwmac-sun8i for A64/Pine64
+- Fixes for Cavium ThunderX (rhbz 1521190)
 
 * Mon Dec 04 2017 Justin M. Forbes <jforbes@fedoraproject.org> - 4.14.3-300
 - Linux v4.14.3 rebase
