@@ -55,7 +55,7 @@ Summary: The Linux kernel
 %if 0%{?released_kernel}
 
 # Do we have a -stable update to apply?
-%define stable_update 5
+%define stable_update 6
 # Set rpm version accordingly
 %if 0%{?stable_update}
 %define stablerev %{stable_update}
@@ -627,8 +627,27 @@ Patch399: arm64-thunderX-fix-ipv6-checksum-offload.patch
 
 # 500 - Temp fixes/CVEs etc
 
-# rhbz 1498016 1498017
-#Patch503: KEYS-don-t-let-add_key-update-an-uninstantiated-key.patch
+# rbhz 1519591 1520764
+Patch500: dccp-CVE-2017-8824-use-after-free-in-DCCP-code.patch
+
+# rhbz 1525474 1525476
+Patch501: USB-core-prevent-malicious-bNumInterfaces-overflow.patch
+
+# https://patchwork.kernel.org/patch/10108209/
+# https://marc.info/?l=linux-kernel&m=151307686618795
+Patch502: Revert-exec-avoid-RLIMIT_STACK-races-with-prlimit.patch
+
+# CVE-2017-17449
+# rhbz 1525762 1525763
+Patch503: netlink-Add-netns-check-on-taps.patch
+
+# CVE-2017-17450
+# rhbz 1525761 1525764
+Patch504: netfilter-xt_osf-Add-missing-permission-checks.patch
+
+# CVE-2017-17448
+# rhbz 1525768 1525769
+Patch505: netfilter-nfnetlink_cthelper-Add-missing-permission-.patch
 
 # 600 - Patches for improved Bay and Cherry Trail device support
 # Below patches are submitted upstream, awaiting review / merging
@@ -650,6 +669,9 @@ Patch625: v3-2-2-Input-synaptics---Lenovo-X1-Carbon-5-should-use-SMBUS-RMI.patch
 
 # Fixes for QXL issues
 Patch627: qxl-fixes.patch
+
+# rhbz 1462175
+Patch628: HID-rmi-Check-that-a-device-is-a-RMI-device-before-c.patch
 
 # END OF PATCH DEFINITIONS
 
@@ -2205,8 +2227,24 @@ fi
 #
 #
 %changelog
-* Sun Dec 17 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.14.5-300.1.acpi_rev_override
+* Tue Dec 19 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.14.6-300.1.acpi_rev_override
 - Enable CONFIG_ACPI_REV_OVERRIDE_POSSIBLE
+
+* Thu Dec 14 2017 Jeremy Cline <jeremy@jcline.org> - 4.14.6-300
+- Linux v4.14.6
+- Security fix for CVE-2017-17449 (rhbz 1525762 1525763)
+- Security fix for CVE-2017-17450 (rhbz 1525761 1525764)
+- Security fix for CVE-2017-17448 (rhbz 1525768 1525769)
+
+* Wed Dec 13 2017 Jeremy Cline <jeremy@jcline.org>
+- Fix CVE-2017-17558 (rhbz 1525474 1525476)
+- Revert exec: avoid RLIMIT_STACK races with prlimit()
+
+* Tue Dec 12 2017 Jeremy Cline <jeremy@jcline.org>
+- Fix CVE-2017-8824 (rhbz 1519591 1520764)
+
+* Mon Dec 11 2017 Jeremy Cline <jeremy@jcline.org>
+- Re-fix USB null pointer dereference on ThinkPad X1 (rhbz 1462175)
 
 * Mon Dec 11 2017 Jeremy Cline <jeremy@jcline.org> - 4.14.5-300
 - Linux v4.14.5
