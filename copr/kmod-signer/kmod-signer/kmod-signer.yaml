@@ -1,0 +1,28 @@
+---
+global:
+  # Path to PEM-encoded X509 ceritifcate.
+  cert_path: ''
+
+  # Path to PEM-encoded private key.
+  key_path: ''
+
+kmod_signing:
+  # Whether kernel module signing is enabled.
+  enabled: false
+
+  # List of path patterns to kernel modules to sign. The files must be
+  # uncompressed.
+  file_patterns:
+    - /lib/modules/**/*.ko
+
+  # Signing mode.
+  #
+  # skip_signed: Skip kernel modules that are already signed (by any key)
+  # resign: Remove previous signature (if one exists) and resign the kernel
+  #         module
+  signing_mode: skip_signed
+
+  # Hashing algorithm used when signing kernel modules. Fedora's official
+  # kernels support SHA256 only. The supported hashing algorithms are specified
+  # via the CONFIG_MODULE_SIG_<algo> options in the kernel config.
+  hash_algorithm: sha256
