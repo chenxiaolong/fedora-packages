@@ -1,5 +1,5 @@
 Name:       kmod-signer
-Version:    0.1
+Version:    0.2
 Release:    1%{?dist}
 Summary:    Tool for automatically signing kernel modules
 
@@ -54,5 +54,8 @@ install -m600 %{SOURCE1} %{buildroot}%{_sysconfdir}/sysconfig/%{name}
 
 
 %changelog
+* Mon Dec 25 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.2-1
+- Add support for compressed kernel modules
+
 * Fri Dec 22 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.1-1
 - Initial release

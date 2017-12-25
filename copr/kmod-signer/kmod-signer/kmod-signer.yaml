@@ -10,8 +10,9 @@ kmod_signing:
   # Whether kernel module signing is enabled.
   enabled: false
 
-  # List of path patterns to kernel modules to sign. The files must be
-  # uncompressed.
+  # List of path patterns to kernel modules to sign. gzip/bzip2/xz-compressed
+  # kernel modules are supported as long as they have the correct file
+  # extension.
   file_patterns:
     - /lib/modules/**/*.ko
 

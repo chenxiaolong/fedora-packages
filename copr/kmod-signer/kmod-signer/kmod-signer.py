@@ -16,8 +16,11 @@
 # along with kmod-signer.  If not, see <http://www.gnu.org/licenses/>.
 
 import argparse
+import bz2
 import enum
 import glob
+import gzip
+import lzma
 import os
 import struct
 import subprocess
@@ -81,6 +84,25 @@ def unlink_if_exists(path):
         pass
 
 
+def open_by_file_ext(*args, **kwargs):
+    path = args[0]
+    if path.endswith('.bz2'):
+        open_func = bz2.open
+    elif path.endswith('.gz'):
+        open_func = gzip.open
+    elif path.endswith('.xz'):
+        open_func = lzma.open
+    else:
+        open_func = open
+    return open_func(*args, **kwargs)
+
+
+def copy_compressed(input_path, output_path):
+    with open_by_file_ext(input_path, 'rb') as f_in:
+        with open_by_file_ext(output_path, 'wb') as f_out:
+            copy_stream(f_in, f_out)
+
+
 def get_kmod_kernel_version(path):
     p = subprocess.Popen(
         ['modinfo', '-F', 'vermagic', path],
@@ -92,11 +114,13 @@ def get_kmod_kernel_version(path):
 
 
 def sign_kmod(input_path, output_path, sign_tool, signing_mode, hash_algo):
-    sign_source = input_path
     sign_target = output_path + '.signing-tmp'
 
     try:
-        with open(input_path, 'rb') as f_in:
+        # Decompress or copy input file
+        copy_compressed(input_path, sign_target)
+
+        with open_by_file_ext(input_path, 'rb') as f_in:
             seek_pos = -KMOD_MAGIC_SIZE
             f_in.seek(seek_pos, os.SEEK_END)
 
@@ -121,8 +145,6 @@ def sign_kmod(input_path, output_path, sign_tool, signing_mode, hash_algo):
                 with open(sign_target, 'wb') as f_out:
                     copy_stream(f_in, f_out, size=data_size)
 
-                sign_source = sign_target
-
         info('Signing \'%s\'' % input_path)
 
         subprocess.run([
@@ -130,11 +152,12 @@ def sign_kmod(input_path, output_path, sign_tool, signing_mode, hash_algo):
             hash_algo,
             signing_key_path,
             signing_cert_path,
-            sign_source,
+            sign_target,
             sign_target,
         ], check=True)
 
-        os.rename(sign_target, output_path)
+        # Compress or copy output file
+        copy_compressed(sign_target, output_path)
     finally:
         unlink_if_exists(sign_target)
 
