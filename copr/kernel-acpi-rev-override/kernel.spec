@@ -55,7 +55,7 @@ Summary: The Linux kernel
 %if 0%{?released_kernel}
 
 # Do we have a -stable update to apply?
-%define stable_update 7
+%define stable_update 8
 # Set rpm version accordingly
 %if 0%{?stable_update}
 %define stablerev %{stable_update}
@@ -628,13 +628,6 @@ Patch335: arm-exynos-fix-usb3.patch
 # rbhz 1519591 1520764
 Patch500: dccp-CVE-2017-8824-use-after-free-in-DCCP-code.patch
 
-# rhbz 1525474 1525476
-Patch501: USB-core-prevent-malicious-bNumInterfaces-overflow.patch
-
-# https://patchwork.kernel.org/patch/10108209/
-# https://marc.info/?l=linux-kernel&m=151307686618795
-Patch502: Revert-exec-avoid-RLIMIT_STACK-races-with-prlimit.patch
-
 # CVE-2017-17449
 # rhbz 1525762 1525763
 Patch503: netlink-Add-netns-check-on-taps.patch
@@ -646,6 +639,10 @@ Patch504: netfilter-xt_osf-Add-missing-permission-checks.patch
 # CVE-2017-17448
 # rhbz 1525768 1525769
 Patch505: netfilter-nfnetlink_cthelper-Add-missing-permission-.patch
+
+# rhbz 1525523
+# https://patchwork.kernel.org/patch/10104349/
+Patch506: e1000e-Fix-e1000_check_for_copper_link_ich8lan-return-value..patch
 
 # 600 - Patches for improved Bay and Cherry Trail device support
 # Below patches are submitted upstream, awaiting review / merging
@@ -673,6 +670,9 @@ Patch628: HID-rmi-Check-that-a-device-is-a-RMI-device-before-c.patch
 
 # CVE-2017-17712 rhbz 1526427 1526933 
 Patch629: net-ipv4-fix-for-a-race-condition-in-raw_sendmsg.patch
+
+# CVE-2017-17741 rhbz 1527112 1527113
+Patch630: v4-KVM-Fix-stack-out-of-bounds-read-in-write_mmio.patch
 
 # END OF PATCH DEFINITIONS
 
@@ -2228,8 +2228,17 @@ fi
 #
 #
 %changelog
-* Fri Dec 22 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.14.7-300.1.acpi_rev_override
+* Mon Dec 25 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.14.8-300.1.acpi_rev_override
 - Enable CONFIG_ACPI_REV_OVERRIDE_POSSIBLE
+
+* Wed Dec 20 2017 Justin M. Forbes <jforbes@fedoraproject.org> - 4.14.8-300
+- Linux v4.14.8
+
+* Wed Dec 20 2017 Jeremy Cline <jeremy@jcline.org>
+- Backport fix e1000_check_for_copper_link_ich8lan return value
+
+* Tue Dec 19 2017 Justin M. Forbes <jforbes@fedoraproject.org>
+- Fix CVE-2017-17741 (rhbz 1527112 1527113)
 
 * Mon Dec 18 2017 Justin M. Forbes <jforbes@fedoraproject.org> - 4.14.7-300
 - Linux v4.14.7
