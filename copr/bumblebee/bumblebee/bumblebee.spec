@@ -50,10 +50,15 @@ management of the dGPU when it's not in use.
 
 
 %build
+# Despite what configure.ac says, omitting CONF_DRIVER_MODULE_NVIDIA is not the
+# same as setting it to 'nvidia'. It needs to be set in order for the
+# proprietary driver to have a higher priority than nouveau. See src/driver.c
+# for the driver handling logic.
 %configure \
     CONF_PRIMUS_LD_PATH=%{_prefix}/lib64/primus:%{_prefix}/lib/primus \
     CONF_LDPATH_NVIDIA=%{_prefix}/lib64:%{_prefix}/lib \
     CONF_MODPATH_NVIDIA=%{_libdir}/nvidia/xorg,%{_libdir}/xorg/modules \
+    CONF_DRIVER_MODULE_NVIDIA=nvidia \
     --with-udev-rules=%{_udevrulesdir} \
     --without-pidfile
 %make_build
