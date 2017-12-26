@@ -1,0 +1,24 @@
+From 99d4f0fc58e19295a9c638cb22e9582b6748b26c Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <chenxiaolong@cxl.epac.to>
+Date: Mon, 25 Dec 2017 17:37:43 -0500
+Subject: [PATCH 2/3] xorg.conf.nvidia: Treat ABI mismatch as warning
+
+---
+ conf/xorg.conf.nvidia | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/conf/xorg.conf.nvidia b/conf/xorg.conf.nvidia
+index c3107f9..dd1e4e4 100644
+--- a/conf/xorg.conf.nvidia
++++ b/conf/xorg.conf.nvidia
+@@ -32,3 +32,7 @@ Section "Device"
+     Option "UseEDID" "false"
+     Option "UseDisplayDevice" "none"
+ EndSection
++
++Section "ServerFlags"
++    Option "IgnoreABI" "True"
++EndSection
+-- 
+2.14.3
+
