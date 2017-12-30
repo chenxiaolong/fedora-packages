@@ -1,0 +1,38 @@
+From d2e8846d44789844720c967a20a0d3b044dc1bbc Mon Sep 17 00:00:00 2001
+From: Eric Biggers <ebiggers3@gmail.com>
+Date: Sun, 6 Mar 2016 11:54:54 -0600
+Subject: [PATCH 1/2] Do not prematurely terminate string while receiving INCR
+ transfer
+
+This fixes a bug where xsel would only output the first 3999 characters
+of the selection.
+---
+ xsel.c | 7 ++++---
+ 1 file changed, 4 insertions(+), 3 deletions(-)
+
+diff --git a/xsel.c b/xsel.c
+index 79cc68b..b131ca6 100644
+--- a/xsel.c
++++ b/xsel.c
+@@ -516,14 +516,15 @@ get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
+     print_debug (D_TRACE, "Got zero length property; end of INCR transfer");
+     return False;
+   } else if (format == 8) {
+-    if ((unsigned long)*offset + length > (unsigned long)*alloc) {
+-      *alloc = *offset + length;
++    if ((unsigned long)*offset + length + 1 > (unsigned long)*alloc) {
++      *alloc = *offset + length + 1;
+       if ((*buffer = realloc (*buffer, *alloc)) == NULL) {
+         exit_err ("realloc error");
+       }
+     }
+     ptr = *buffer + *offset;
+-    xs_strncpy (ptr, value, length);
++    memcpy (ptr, value, length);
++    ptr[length] = '\0';
+     *offset += length;
+     print_debug (D_TRACE, "Appended %d bytes to buffer\n", length);
+   } else {
+-- 
+2.14.3
+

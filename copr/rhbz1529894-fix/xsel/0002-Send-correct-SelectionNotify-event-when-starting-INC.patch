@@ -1,0 +1,43 @@
+From 43a106bba319ed33321927f2ba7f0fa62a4b6a36 Mon Sep 17 00:00:00 2001
+From: Eric Biggers <ebiggers3@gmail.com>
+Date: Sun, 6 Mar 2016 11:45:59 -0600
+Subject: [PATCH 2/2] Send correct SelectionNotify event when starting INCR
+ transfer
+
+The target should be copied from that given in SelectionRequest, not set
+to INCR.  This fixes a bug where it was impossible to paste > 4000
+characters of text from xsel to the Chromium browser.  Note that some
+programs, including Chromium, validate the 'target' that is passed back;
+while other programs, such as those which use the GTK clipboard API,
+ignore it.  But based the ICCCM, it appears that xsel is incorrect, not
+chromium:
+
+    "The owner should set the specified selection, target, time, and
+    propety arguments to the values received in the SelectionRequest event."
+---
+ xsel.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/xsel.c b/xsel.c
+index b131ca6..44259b5 100644
+--- a/xsel.c
++++ b/xsel.c
+@@ -1185,13 +1185,13 @@ change_property (Display * display, Window requestor, Atom property,
+   print_debug (D_TRACE, "large data transfer");
+ 
+ 
+-  /* Send a SelectionNotify event of type INCR */
++  /* Send a SelectionNotify event */
+   ev.type = SelectionNotify;
+   ev.display = display;
+   ev.requestor = requestor;
+   ev.selection = selection;
+   ev.time = time;
+-  ev.target = incr_atom; /* INCR */
++  ev.target = target;
+   ev.property = property;
+ 
+   XSelectInput (ev.display, ev.requestor, PropertyChangeMask);
+-- 
+2.14.3
+
