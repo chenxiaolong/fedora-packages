@@ -55,7 +55,7 @@ Summary: The Linux kernel
 %if 0%{?released_kernel}
 
 # Do we have a -stable update to apply?
-%define stable_update 11
+%define stable_update 13
 # Set rpm version accordingly
 %if 0%{?stable_update}
 %define stablerev %{stable_update}
@@ -572,6 +572,11 @@ Patch205: MODSIGN-Import-certificates-from-UEFI-Secure-Boot.patch
 
 Patch206: MODSIGN-Support-not-importing-certs-from-db.patch
 
+# bz 1497559 - Make kernel MODSIGN code not error on missing variables
+Patch207: 0001-Make-get_cert_list-not-complain-about-cert-lists-tha.patch
+Patch208: 0002-Add-efi_status_to_str-and-rework-efi_status_to_err.patch
+Patch209: 0003-Make-get_cert_list-use-efi_status_to_str-to-print-er.patch
+
 Patch210: disable-i8042-check-on-apple-mac.patch
 
 Patch211: drm-i915-hush-check-crtc-state.patch
@@ -640,6 +645,14 @@ Patch505: netfilter-nfnetlink_cthelper-Add-missing-permission-.patch
 # https://patchwork.kernel.org/patch/10104349/
 Patch506: e1000e-Fix-e1000_check_for_copper_link_ich8lan-return-value..patch
 
+# 550-600 Meltdown and Spectre Fixes
+Patch550: prevent-bounds-check-bypass-via-speculative-execution.patch
+Patch551: 0001-x86-cpufeatures-Add-X86_BUG_SPECTRE_V-12.patch
+Patch552: 0002-sysfs-cpu-Add-vulnerability-folder.patch
+Patch553: 0001-x86-cpu-AMD-Make-LFENCE-a-serializing-instruction.patch
+Patch554: 0002-x86-cpu-AMD-Use-LFENCE_RDTSC-in-preference-to-MFENCE.patch
+Patch555: retpoline.patch
+
 # 600 - Patches for improved Bay and Cherry Trail device support
 # Below patches are submitted upstream, awaiting review / merging
 Patch601: 0001-Input-gpio_keys-Allow-suppression-of-input-events-fo.patch
@@ -668,7 +681,11 @@ Patch628: HID-rmi-Check-that-a-device-is-a-RMI-device-before-c.patch
 Patch630: v4-KVM-Fix-stack-out-of-bounds-read-in-write_mmio.patch
 
 Patch631: cgroup-for-4.15-fixes-cgroup-fix-css_task_iter-crash-on-CSS_TASK_ITER_PROC.patch
-Patch632: x86-cpu-x86-pti-Do-not-enable-PTI-on-AMD-processors.patch
+
+# rhbz1514969
+Patch633: 0001-platform-x86-dell-laptop-Filter-out-spurious-keyboar.patch
+
+
 
 # END OF PATCH DEFINITIONS
 
@@ -1514,6 +1531,8 @@ BuildKernel() {
       cp -a --parents arch/%{asmarch}/include $RPM_BUILD_ROOT/lib/modules/$KernelVer/build/
     fi
 %ifarch aarch64
+    # Needed for systemtap
+    cp -a --parents arch/arm64/kernel/module.lds $RPM_BUILD_ROOT/lib/modules/$KernelVer/build/
     # arch/arm64/include/asm/xen references arch/arm
     cp -a --parents arch/arm/include/asm/xen $RPM_BUILD_ROOT/lib/modules/$KernelVer/build/
     # arch/arm64/include/asm/opcodes.h references arch/arm
@@ -2225,8 +2244,24 @@ fi
 #
 #
 %changelog
-* Thu Jan 04 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.14.11-300.1.acpi_rev_override
+* Fri Jan 12 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 4.14.13-300.1.acpi_rev_override
 - Enable CONFIG_ACPI_REV_OVERRIDE_POSSIBLE
+
+* Wed Jan 10 2018 Justin M. Forbes <jforbes@fedoraproject.org> - 4.14.13-300
+- Linux v4.14.13
+- Iniital retpoline fixes for Spectre v2
+
+* Mon Jan 08 2018 Laura Abbott <labbott@redhat.com>
+- Disable CONFIG_RESET_ATTACK_MITIGATION (rhbz 1532058)
+
+* Fri Jan 05 2018 Laura Abbott <labbott@redhat.com>
+- Copy module linker script (rhbz 1531182)
+
+* Fri Jan 05 2018 Justin M. Forbes <jforbes@fedoraproject.org> - 4.14.12-300
+- Linux v4.14.12
+
+* Thu Jan 04 2018 Hans de Goede <hdegoede@redhat.com>
+- Add a patch to filter false positive kbd backlight change events (#1514969)
 
 * Wed Jan 03 2018 Justin M. Forbes <jforbes@fedoraproject.org> - 4.14.11-300
 - Linux v4.14.11
