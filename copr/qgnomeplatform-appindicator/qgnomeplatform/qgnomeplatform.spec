@@ -1,7 +1,7 @@
 
 Name:           qgnomeplatform
 Version:        0.3
-Release:        5.2%{?dist}
+Release:        9.1%{?dist}
 Summary:        Qt Platform Theme aimed to accommodate Gnome settings
 
 License:        LGPLv2+
@@ -57,13 +57,21 @@ make install INSTALL_ROOT=%{buildroot} -C %{_target_platform}
 
 
 %changelog
-* Mon Oct 23 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.3-5.2
-- Switch to better patch that doesn't require initializing QGnomeTheme
+* Sat Apr 28 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.3-9.1
+- Add patch for AppIndicator support
 - https://github.com/MartinBriza/QGnomePlatform/pull/30
 
-* Sun Oct 22 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.3-5.1
-- Add patch for AppIndicator support
-- https://github.com/MartinBriza/QGnomePlatform/pull/29
+* Wed Feb 14 2018 Jan Grulich <jgrulich@redhat.com> - 0.3-9
+- rebuild (qt5)
+
+* Fri Feb 09 2018 Fedora Release Engineering <releng@fedoraproject.org> - 0.3-8
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* Wed Dec 20 2017 Jan Grulich <jgrulich@redhat.com> - 0.3-7
+- rebuild (qt5)
+
+* Sun Nov 26 2017 Rex Dieter <rdieter@fedoraproject.org> - 0.3-6
+- rebuild (qt5)
 
 * Mon Oct 09 2017 Rex Dieter <rdieter@fedoraproject.org> - 0.3-5
 - rebuild (qt5)
