@@ -1,16 +1,13 @@
 %{?mingw_package_header}
 
 Name:           mingw-lz4
-Version:        1.7.5
-Release:        3.1%{?dist}
+Version:        1.8.1.2
+Release:        4.1%{?dist}
 Summary:        Extremely fast compression algorithm
 
 License:        GPLv2+ and BSD
 URL:            https://lz4.github.io/lz4/
 Source0:        https://github.com/lz4/lz4/archive/v%{version}/lz4-%{version}.tar.gz
-
-# https://github.com/lz4/lz4/pull/359
-Patch0:         0001-Add-DLL-files-to-the-INSTALL-target.patch
 
 BuildArch:      noarch
 
@@ -88,7 +85,7 @@ contains static libraries for static linking of applications.
 
 
 %prep
-%autosetup -n lz4-%{version} -p1
+%autosetup -n lz4-%{version}
 
 
 %build
@@ -147,8 +144,32 @@ find %{buildroot} -name unlz4.1 -delete
 
 
 %changelog
-* Sun Jun 11 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 1.7.5-3.1
-- Convert to mingw package
+* Sat Apr 28 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 1.8.1.2-4.1
+- Rebase off latest lz4 package
+
+* Fri Feb 09 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 1.8.1.2-4
+- Escape macros in %%changelog
+
+* Thu Feb 08 2018 Fedora Release Engineering <releng@fedoraproject.org> - 1.8.1.2-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
+
+* Wed Jan 31 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 1.8.1.2-2
+- Switch to %%ldconfig_scriptlets
+
+* Mon Jan 15 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 1.8.1.2-1
+- Update to 1.8.1.2
+
+* Sat Aug 19 2017 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 1.8.0-1
+- Update to 1.8.0
+
+* Thu Aug 03 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.7.5-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Binutils_Mass_Rebuild
+
+* Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 1.7.5-5
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
+
+* Sat Jul 08 2017 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 1.7.5-4
+- Split libs properly for multilib
 
 * Sat Mar  4 2017 Peter Robinson <pbrobinson@fedoraproject.org> 1.7.5-3
 - Split libs out to a sub package
@@ -177,7 +198,7 @@ find %{buildroot} -name unlz4.1 -delete
 - Fixed: incompatibility sparse mode vs console.
 - Fixed: LZ4IO exits too early when frame crc not present.
 - Fixed: incompatibility sparse mode vs append mode.
-- Performance fix: big compression speed boost for clang(+30%).
+- Performance fix: big compression speed boost for clang(+30%%).
 
 * Wed Jun 17 2015 Fedora Release Engineering <rel-eng@lists.fedoraproject.org> - r129-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_23_Mass_Rebuild
