@@ -1,5 +1,5 @@
 Name:           ubuntu-font-gsettings
-Version:        17.10.18
+Version:        18.04.5
 Release:        1%{?dist}
 Summary:        GSettings overrides to set Ubuntu fonts as default
 
@@ -40,5 +40,8 @@ install -m 0644 \
 
 
 %changelog
+* Sat Apr 28 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 18.04.5
+- Update to 18.04.5
+
 * Sun Dec 3 2017 Andrew Gunnerson <chenxiaolong@cxl.epac.to> - 17.10.18
 - Initial release
