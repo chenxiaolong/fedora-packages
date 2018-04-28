@@ -1,13 +1,14 @@
-%global ubuntu_rel 0ubuntu1
+%global ubuntu_rel 0ubuntu2
 
 Name:           fontconfig-ubuntu
 Version:        2.12.6
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Default fontconfig configuration from Ubuntu
 
 License:        MIT and Public Domain and UCD
 URL:            https://launchpad.net/ubuntu/+source/fontconfig
 Source0:        https://launchpad.net/ubuntu/+archive/primary/+files/fontconfig_%{version}-%{ubuntu_rel}.debian.tar.xz
+Patch0:         0001-Fix-compatibility-with-2.13.0.patch
 
 BuildArch:      noarch
 
@@ -28,7 +29,7 @@ The following patches are currently excluded:
 
 
 %prep
-%autosetup -n debian
+%autosetup -n debian -p1
 
 filterdiff -x '*/conf.d/Makefile.am' \
     patches/04_ubuntu_monospace_lcd_filter_conf.patch \
@@ -69,5 +70,8 @@ ln -s %{_fontconfig_templatedir}/70-no-bitmaps.conf \
 
 
 %changelog
+* Sat Apr 28 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 2.12.6-2
+- Fix compatibility with fontconfig 2.13.0
+
 * Sun Dec 3 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 2.12.6-1
 - Initial release

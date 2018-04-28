@@ -1,0 +1,47 @@
+From ba12436e12b51a8ecc366c74686b62cc03970fac Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <andrewgunnerson@gmail.com>
+Date: Sat, 28 Apr 2018 15:06:11 -0400
+Subject: [PATCH] Fix compatibility with 2.13.0
+
+Signed-off-by: Andrew Gunnerson <andrewgunnerson@gmail.com>
+---
+ .../04_ubuntu_monospace_lcd_filter_conf.patch    | 16 +++++++++++++++-
+ 1 file changed, 15 insertions(+), 1 deletion(-)
+
+diff --git a/patches/04_ubuntu_monospace_lcd_filter_conf.patch b/patches/04_ubuntu_monospace_lcd_filter_conf.patch
+index dbd13af..9472182 100644
+--- a/patches/04_ubuntu_monospace_lcd_filter_conf.patch
++++ b/patches/04_ubuntu_monospace_lcd_filter_conf.patch
+@@ -6,7 +6,7 @@ Description:  Use legacy lcdfilter with smaller monospace fonts
+ 
+ --- /dev/null
+ +++ b/conf.d/53-monospace-lcd-filter.conf
+-@@ -0,0 +1,22 @@
++@@ -0,0 +1,36 @@
+ +<?xml version="1.0"?>
+ +<!DOCTYPE fontconfig SYSTEM "fonts.dtd">
+ +<!-- conf.d/monospace-lcd-filter.conf -->
+@@ -15,6 +15,20 @@ Description:  Use legacy lcdfilter with smaller monospace fonts
+ +  <match target="pattern">
+ +    <test name="family">
+ +      <string>DejaVu Sans Mono</string>
+++    </test>
+++    <test name="pixelsize" compare="less_eq">
+++      <double>12.0</double>
+++    </test>
+++
+++    <edit name="lcd_filter" mode="append">
+++      <const>lcdlegacy</const>
+++    </edit>
+++    <edit name="hintstyle" mode="append">
+++      <const>hintfull</const>
+++    </edit>
+++  </match>
+++  <match target="pattern">
+++    <test name="family">
+ +      <string>Bitstream Vera Sans Mono</string>
+ +    </test>
+ +    <test name="pixelsize" compare="less_eq">
+-- 
+2.17.0
+
