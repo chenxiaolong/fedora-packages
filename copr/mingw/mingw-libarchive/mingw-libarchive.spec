@@ -1,8 +1,8 @@
 %{?mingw_package_header}
 
 Name:           mingw-libarchive
-Version:        3.3.1
-Release:        2.1%{?dist}
+Version:        3.3.2
+Release:        1.1%{?dist}
 Summary:        MinGW package for handling streaming archive formats
 
 License:        BSD
@@ -141,7 +141,8 @@ libarchive packages.
 
 %build
 build/autogen.sh
-%mingw_configure
+# Disable CNG to support wider range of Windows versions
+%mingw_configure --without-cng
 %mingw_make %{?_smp_mflags} V=1
 
 
@@ -205,8 +206,20 @@ rm -r $RPM_BUILD_ROOT/%{mingw64_prefix}/share
 
 
 %changelog
-* Fri Oct 20 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 3.3.1-2.1
+* Sat Nov 24 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 3.3.2-1.1
 - Enable LZ4 support
+
+* Fri Aug 24 2018 Christophe Fergeau <cfergeau@redhat.com> - 3.3.2-1
+- Update to 3.3.2
+
+* Fri Aug 24 2018 Richard W.M. Jones <rjones@redhat.com> - 3.3.1-5
+- Rebuild for new mingw-openssl.
+
+* Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 3.3.1-4
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Thu Feb 08 2018 Fedora Release Engineering <releng@fedoraproject.org> - 3.3.1-3
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_28_Mass_Rebuild
 
 * Wed Jul 26 2017 Fedora Release Engineering <releng@fedoraproject.org> - 3.3.1-2
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_27_Mass_Rebuild
