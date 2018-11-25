@@ -1,8 +1,8 @@
 %{?mingw_package_header}
 
 Name:           mingw-lz4
-Version:        1.8.1.2
-Release:        4.1%{?dist}
+Version:        1.8.2
+Release:        2.1%{?dist}
 Summary:        Extremely fast compression algorithm
 
 License:        GPLv2+ and BSD
@@ -144,8 +144,14 @@ find %{buildroot} -name unlz4.1 -delete
 
 
 %changelog
-* Sat Apr 28 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 1.8.1.2-4.1
+* Sat Nov 24 2018 Andrew Gunnerson <andrewgunnerson@gmail.com> - 1.8.2-2.1
 - Rebase off latest lz4 package
+
+* Fri Jul 13 2018 Fedora Release Engineering <releng@fedoraproject.org> - 1.8.2-2
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_29_Mass_Rebuild
+
+* Sat May 12 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 1.8.2-1
+- Update to 1.8.2
 
 * Fri Feb 09 2018 Igor Gnatenko <ignatenkobrain@fedoraproject.org> - 1.8.1.2-4
 - Escape macros in %%changelog
