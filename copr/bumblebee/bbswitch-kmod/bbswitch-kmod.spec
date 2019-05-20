@@ -3,7 +3,7 @@
 
 Name:           bbswitch-kmod
 Version:        0.8
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Kernel module for powering off discrete GPU on Optimus laptops
 
 License:        GPLv2+
@@ -71,5 +71,8 @@ done
 
 
 %changelog
+* Mon May 20 2019 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.8-2
+- Rebuild against new kmodtool
+
 * Mon Dec 25 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.8-1
 - Initial release
