@@ -3,7 +3,7 @@
 
 Name:           bumblebee
 Version:        3.2.1
-Release:        2%{?dist}
+Release:        4%{?dist}
 Summary:        Daemon to support NVIDIA Optimus via VirtualGL
 
 License:        GPLv3+
@@ -26,19 +26,21 @@ Patch7:         0008-libglvnd.patch
 Patch10:        0001-Execute-usr-libexec-Xorg.wrap-instead-of-Xorg.patch
 Patch11:        0002-xorg.conf.nvidia-Treat-ABI-mismatch-as-warning.patch
 Patch12:        0003-bumblebee-bugreport-Add-support-for-Fedora.patch
+Patch13:        0001-Add-option-to-always-unload-the-driver-on-exit.patch
 
+BuildRequires:  gcc
 BuildRequires:  help2man
 BuildRequires:  systemd
 
 BuildRequires:  pkgconfig(glib-2.0)
 BuildRequires:  pkgconfig(x11)
 
-Requires:       bbswitch-kmod
 Requires:       VirtualGL
 Requires(pre):  shadow-utils
 
 Requires:       %{name}-selinux = %{version}-%{release}
 
+Recommends:     bbswitch-kmod
 Recommends:     primus
 
 %{?systemd_requires}
@@ -166,6 +168,12 @@ fi
 
 
 %changelog
+* Sun Aug 04 2019 Andrew Gunnerson <andrewgunnerson@gmail.com> - 3.2.1-4
+- Add gcc to build dependencies
+
+* Sat Aug 03 2019 Elia Geretto <elia.f.geretto@gmail.com> - 3.2.1-3
+- Add support for AlwaysUnloadKernelDriver
+
 * Mon Dec 25 2017 Andrew Gunnerson <andrewgunnerson@gmail.com> - 3.2.1-2
 - Add -selinux subpackage that allows bumblebeed to write to /proc/acpi/bbswitch
 
