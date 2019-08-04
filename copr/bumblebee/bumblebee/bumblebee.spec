@@ -3,7 +3,7 @@
 
 Name:           bumblebee
 Version:        3.2.1
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Daemon to support NVIDIA Optimus via VirtualGL
 
 License:        GPLv3+
@@ -28,6 +28,7 @@ Patch11:        0002-xorg.conf.nvidia-Treat-ABI-mismatch-as-warning.patch
 Patch12:        0003-bumblebee-bugreport-Add-support-for-Fedora.patch
 Patch13:        0001-Add-option-to-always-unload-the-driver-on-exit.patch
 
+BuildRequires:  gcc
 BuildRequires:  help2man
 BuildRequires:  systemd
 
@@ -167,6 +168,9 @@ fi
 
 
 %changelog
+* Sun Aug 04 2019 Andrew Gunnerson <andrewgunnerson@gmail.com> - 3.2.1-4
+- Add gcc to build dependencies
+
 * Sat Aug 03 2019 Elia Geretto <elia.f.geretto@gmail.com> - 3.2.1-3
 - Add support for AlwaysUnloadKernelDriver
 
