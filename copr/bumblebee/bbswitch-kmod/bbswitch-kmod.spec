@@ -3,7 +3,7 @@
 
 Name:           bbswitch-kmod
 Version:        0.8
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Kernel module for powering off discrete GPU on Optimus laptops
 
 License:        GPLv2+
@@ -51,7 +51,7 @@ done
 for kernel_version in %{?kernel_versions}; do
     make %{?_smp_mflags} \
         -C "${kernel_version##*___}" \
-        SUBDIRS=${PWD}/_kmod_build_${kernel_version%%___*} \
+        M=${PWD}/_kmod_build_${kernel_version%%___*} \
         modules
 done
 
@@ -71,6 +71,10 @@ done
 
 
 %changelog
+* Tue Jan 07 2020 Andrew Gunnerson <chillermillerlong@hotmail.com> - 0.8-3
+- Change deprecated SUBDIRS= to M=
+- https://github.com/chenxiaolong/fedora-packages/issues/9
+
 * Mon May 20 2019 Andrew Gunnerson <andrewgunnerson@gmail.com> - 0.8-2
 - Rebuild against new kmodtool
 
