@@ -1,4 +1,4 @@
-From aa83f882778feaf9cfd00d6b757d18f322b1bdfc Mon Sep 17 00:00:00 2001
+From 9b264505ebe0561ddbb89bb1d96d77ffa0eb5120 Mon Sep 17 00:00:00 2001
 From: Andrew Gunnerson <andrewgunnerson@gmail.com>
 Date: Sat, 30 Nov 2019 20:49:10 -0500
 Subject: [PATCH] ad: Add support for passing --add-samba-data to adcli
@@ -27,7 +27,7 @@ Signed-off-by: Andrew Gunnerson <andrewgunnerson@gmail.com>
  7 files changed, 30 insertions(+), 2 deletions(-)
 
 diff --git a/src/config/SSSDConfig/__init__.py.in b/src/config/SSSDConfig/__init__.py.in
-index eba89b461..92e614117 100644
+index a1b088b..b3035fc 100644
 --- a/src/config/SSSDConfig/__init__.py.in
 +++ b/src/config/SSSDConfig/__init__.py.in
 @@ -252,6 +252,7 @@ option_strings = {
@@ -35,11 +35,11 @@ index eba89b461..92e614117 100644
      'ad_maximum_machine_account_password_age' : _('Maximum age in days before the machine account password should be renewed'),
      'ad_machine_account_password_renewal_opts' : _('Option for tuning the machine account renewal task'),
 +    'ad_update_samba_machine_account_password' : _('Whether to update the machine account password in the Samba database'),
+     'ad_use_ldaps' : _('Use LDAPS port for LDAP and Global Catalog requests'),
  
      # [provider/krb5]
-     'krb5_kdcip' : _('Kerberos server address'),
 diff --git a/src/config/cfg_rules.ini b/src/config/cfg_rules.ini
-index 8c73c89ac..fbace7adf 100644
+index fd5336d..286443b 100644
 --- a/src/config/cfg_rules.ini
 +++ b/src/config/cfg_rules.ini
 @@ -464,6 +464,7 @@ option = ad_machine_account_password_renewal_opts
@@ -47,11 +47,11 @@ index 8c73c89ac..fbace7adf 100644
  option = ad_server
  option = ad_site
 +option = ad_update_samba_machine_account_password
+ option = ad_use_ldaps
  
  # IPA provider specific options
- option = ipa_anchor_uuid
 diff --git a/src/config/etc/sssd.api.d/sssd-ad.conf b/src/config/etc/sssd.api.d/sssd-ad.conf
-index 80e329b3b..19c2b7ef5 100644
+index d6443e2..4d10e69 100644
 --- a/src/config/etc/sssd.api.d/sssd-ad.conf
 +++ b/src/config/etc/sssd.api.d/sssd-ad.conf
 @@ -20,6 +20,7 @@ ad_gpo_default_right = str, None, false
@@ -59,14 +59,14 @@ index 80e329b3b..19c2b7ef5 100644
  ad_maximum_machine_account_password_age = int, None, false
  ad_machine_account_password_renewal_opts = str, None, false
 +ad_update_samba_machine_account_password = bool, None, false
+ ad_use_ldaps = bool, None, false
  ldap_uri = str, None, false
  ldap_backup_uri = str, None, false
- ldap_search_base = str, None, false
 diff --git a/src/man/sssd-ad.5.xml b/src/man/sssd-ad.5.xml
-index fdcb4e4b9..30c7d07cf 100644
+index ade56cd..191bf28 100644
 --- a/src/man/sssd-ad.5.xml
 +++ b/src/man/sssd-ad.5.xml
-@@ -1015,6 +1015,22 @@ ad_gpo_map_deny = +my_pam_service
+@@ -1035,6 +1035,22 @@ ad_gpo_map_deny = +my_pam_service
                      </listitem>
                  </varlistentry>
  
@@ -90,19 +90,19 @@ index fdcb4e4b9..30c7d07cf 100644
                      <term>dyndns_update (boolean)</term>
                      <listitem>
 diff --git a/src/providers/ad/ad_common.h b/src/providers/ad/ad_common.h
-index 75f11de2e..36366e329 100644
+index d23aee6..8b7a861 100644
 --- a/src/providers/ad/ad_common.h
 +++ b/src/providers/ad/ad_common.h
-@@ -67,6 +67,7 @@ enum ad_basic_opt {
+@@ -68,6 +68,7 @@ enum ad_basic_opt {
      AD_KRB5_CONFD_PATH,
      AD_MAXIMUM_MACHINE_ACCOUNT_PASSWORD_AGE,
      AD_MACHINE_ACCOUNT_PASSWORD_RENEWAL_OPTS,
 +    AD_UPDATE_SAMBA_MACHINE_ACCOUNT_PASSWORD,
+     AD_USE_LDAPS,
  
      AD_OPTS_BASIC /* opts counter */
- };
 diff --git a/src/providers/ad/ad_machine_pw_renewal.c b/src/providers/ad/ad_machine_pw_renewal.c
-index 9dc36247a..e0db5fad5 100644
+index 9dc3624..e0db5fa 100644
 --- a/src/providers/ad/ad_machine_pw_renewal.c
 +++ b/src/providers/ad/ad_machine_pw_renewal.c
 @@ -40,6 +40,7 @@ static errno_t get_adcli_extra_args(const char *ad_domain,
@@ -145,7 +145,7 @@ index 9dc36247a..e0db5fad5 100644
          DEBUG(SSSDBG_OP_FAILURE, "get_adcli_extra_args failed.\n");
          goto done;
 diff --git a/src/providers/ad/ad_opts.c b/src/providers/ad/ad_opts.c
-index cd568e466..9707314e4 100644
+index 905a15c..e9a3dd6 100644
 --- a/src/providers/ad/ad_opts.c
 +++ b/src/providers/ad/ad_opts.c
 @@ -54,6 +54,7 @@ struct dp_option ad_basic_opts[] = {
@@ -153,9 +153,9 @@ index cd568e466..9707314e4 100644
      { "ad_maximum_machine_account_password_age", DP_OPT_NUMBER, { .number = 30 }, NULL_NUMBER },
      { "ad_machine_account_password_renewal_opts", DP_OPT_STRING, { "86400:750" }, NULL_STRING },
 +    { "ad_update_samba_machine_account_password", DP_OPT_BOOL, BOOL_FALSE, BOOL_FALSE },
+     { "ad_use_ldaps", DP_OPT_BOOL, BOOL_FALSE, BOOL_FALSE },
      DP_OPTION_TERMINATOR
  };
- 
 -- 
-2.23.0
+2.24.1
 

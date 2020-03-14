@@ -35,27 +35,44 @@
 %endif
 
 Name: sssd
-Version: 2.2.2
-Release: 3.1%{?dist}
+Version: 2.2.3
+Release: 13.1%{?dist}
 Summary: System Security Services Daemon
 License: GPLv3+
 URL: https://pagure.io/SSSD/sssd/
 Source0: https://releases.pagure.org/SSSD/sssd/%{name}-%{version}.tar.gz
 
 ### Patches ###
-
-# Fix KCM cached tickets behaving as if expired shortly after issue
-# https://github.com/SSSD/sssd/pull/904
-# https://bugzilla.redhat.com/show_bug.cgi?id=1757224
-Patch0: 0001-KCM-Set-kdc_offset-to-zero-initially.patch
-# Workaround a problem setting up replica in containers
-# https://github.com/SSSD/sssd/pull/900
-# https://bugzilla.redhat.com/show_bug.cgi?id=1755643
-Patch1: 0001-SSS_CLIENT-got-rid-of-using-PRNG.patch
+Patch0001: 0001-Fix-build-failure-against-samba-4.12.0rc1.patch
+Patch0002: 0002-BUILD-Accept-krb5-1.18-for-building-the-PAC-plugin.patch
+Patch0003: 0003-INI-sssctl-config-check-command-error-messages.patch
+Patch0004: 0004-certmap-mention-special-regex-characters-in-man-page.patch
+Patch0005: 0005-ldap_child-do-not-try-PKINIT.patch
+Patch0006: 0006-util-watchdog-fixed-watchdog-implementation.patch
+Patch0007: 0007-providers-krb5-got-rid-of-unused-code.patch
+Patch0008: 0008-data_provider_be-got-rid-of-duplicating-SIGTERM-hand.patch
+Patch0009:  0009-util-server-improved-debug-at-shutdown.patch
+Patch0010: 0010-util-sss_ptr_hash-fixed-double-free-in-sss_ptr_hash_.patch
+Patch0011: 0011-sdap-Add-randomness-to-ldap-connection-timeout.patch
+Patch0012: 0012-ad-allow-booleans-for-ad_inherit_opts_if_needed.patch
+Patch0013: 0013-ad-add-ad_use_ldaps.patch
+Patch0014: 0014-ldap-add-new-option-ldap_sasl_maxssf.patch
+Patch0015: 0015-ad-set-min-and-max-ssf-for-ldaps.patch
+Patch0016: 0016-BE_REFRESH-Do-not-try-to-refresh-domains-from-other-.patch
+Patch0017: 0017-sysdb_sudo-Enable-LDAP-time-format-compatibility.patch
+Patch0018: 0018-sbus_server-stylistic-rename.patch
+Patch0019: 0019-sss_ptr_hash-don-t-keep-empty-sss_ptr_hash_delete_da.patch
+Patch0020: 0020-sss_ptr_hash-sss_ptr_hash_delete-fix-optimization.patch
+Patch0021: 0021-sss_ptr_hash-removed-redundant-check.patch
+Patch0022: 0022-sss_ptr_hash-fixed-memory-leak.patch
+Patch0023: 0023-sss_ptr_hash-internal-refactoring.patch
+Patch0024: 0024-TESTS-added-sss_ptr_hash-unit-test.patch
+Patch0025: 0025-p11_child-check-if-card-is-present-in-wait_for_card.patch
+Patch0026: 0026-PAM-client-only-require-UID-0-for-private-socket.patch
 # Add support for passing --add-samba-data to adcli
 # https://github.com/SSSD/sssd/pull/950
 # https://pagure.io/SSSD/sssd/issue/3920
-Patch2: 0001-ad-Add-support-for-passing-add-samba-data-to-adcli.patch
+Patch0100: 0001-ad-Add-support-for-passing-add-samba-data-to-adcli.patch
 
 ### Downstream only patches ###
 Patch0502: 0502-SYSTEMD-Use-capabilities.patch
@@ -84,6 +101,7 @@ Suggests: sssd-dbus = %{version}-%{release}
 
 ### Build Dependencies ###
 
+BuildRequires: make
 BuildRequires: autoconf
 BuildRequires: automake
 BuildRequires: libtool
@@ -219,6 +237,7 @@ Requires: sssd-common = %{version}-%{release}
 # required by sss_obfuscate
 Requires: python3-sss = %{version}-%{release}
 Requires: python3-sssdconfig = %{version}-%{release}
+Recommends: sssd-dbus
 
 %description tools
 Provides userspace tools for manipulating users, groups, and nested groups in
@@ -786,6 +805,7 @@ done
 %{_datadir}/sssd/systemtap/id_perf.stp
 %{_datadir}/sssd/systemtap/nested_group_perf.stp
 %{_datadir}/sssd/systemtap/dp_request.stp
+%{_datadir}/sssd/systemtap/ldap_perf.stp
 %dir %{_datadir}/systemtap
 %dir %{_datadir}/systemtap/tapset
 %{_datadir}/systemtap/tapset/sssd.stp
@@ -797,6 +817,7 @@ done
 %license COPYING
 %{_libdir}/%{name}/libsss_ldap.so
 %{_mandir}/man5/sssd-ldap.5*
+%{_mandir}/man5/sssd-ldap-attributes.5*
 
 %files krb5-common
 %license COPYING
@@ -1080,8 +1101,58 @@ fi
                                 %{_libdir}/%{name}/modules/libwbclient.so
 
 %changelog
-* Wed Dec 04 2019 Andrew Gunnerson <andrewgunnerson@gmail.com> - 2.2.2-3.1
+* Sat Mar 14 2020 Andrew Gunnerson <chillermillerlong@hotmail.com> - 2.2.3-13.1
 - Add support for passing --add-samba-data to adcli
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-13
+- Resolves: upstream#4159 - p11_child should have an option to skip
+                            C_WaitForSlotEvent if the PKCS#11 module does not
+                            implement it properly
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-12
+- Resolves: upstream#4135 - util/sss_ptr_hash.c: potential double free in
+                            `sss_ptr_hash_delete_cb()`
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-11
+- Resolves: upstream#4118 - sssd requires timed sudoers ldap entries to be
+  specified up to the seconds
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-11
+- Add sssd-dbus package as a dependency of sssd-tools
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-10
+- Resolves: upstream#4142 - sssd_be frequent crash
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-9
+- Resolves: upstream#4131 Force LDAPS over 636 with AD Provider
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-8
+- Resolves: upstream#3630 - Randomize ldap_connection_expire_timeout either
+                            by default or w/ a configure option
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-7
+- Resolves: upstream#4135 - util/sss_ptr_hash.c: potential double free in
+                            `sss_ptr_hash_delete_cb()`
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-6
+- Resolves: upstream#4088 - server/be: SIGTERM handling is incorrect
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-5
+- Resolves: upstream##4089 Watchdog implementation or usage is incorrect
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-4
+- Resolves: upstream#4126 pcscd rejecting sssd ldap_child as unauthorized
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-3
+- Resolves: upstream#4127 - [Doc]Provide explanation on escape character for
+                            match rules sss-certmap
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-2
+- Resolves: upstream#4129 - sssctl config-check command does not give proper
+                            error messages with line numbers
+
+* Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-1
+- Update to latest released upstream version
+- https://docs.pagure.org/SSSD.sssd/users/relnotes/notes_2_2_3.htm
 
 * Tue Oct 22 2019 Adam Williamson <awilliam@redhat.com> - 2.2.2-3
 - Resolves: rhbz#1755643 - Upgrade to sssd 2.2.2-1.fc30 breaks setting
