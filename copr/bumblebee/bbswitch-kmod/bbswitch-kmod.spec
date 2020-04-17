@@ -3,12 +3,13 @@
 
 Name:           bbswitch-kmod
 Version:        0.8
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Kernel module for powering off discrete GPU on Optimus laptops
 
 License:        GPLv2+
 URL:            https://github.com/Bumblebee-Project/bbswitch
 Source0:        https://github.com/Bumblebee-Project/bbswitch/archive/v%{version}.tar.gz
+Patch0:         0001-proc_ops-struct.patch
 
 BuildRequires:  kmodtool
 
@@ -34,6 +35,8 @@ bbswitch kernel module.
 %prep
 %setup -q -T -c
 tar xf %{SOURCE0}
+
+%patch0 -p1 -d bbswitch-%{version}
 
 # For common package
 cp bbswitch-%{version}/{COPYING,NEWS,README.md} .
@@ -71,6 +74,9 @@ done
 
 
 %changelog
+* Fri Apr 17 2020 Andrew Gunnerson <chillermillerlong@hotmail.com> - 0.8-4
+- Add Arch Linux patch for compatbility with kernel >=5.6.0
+
 * Tue Jan 07 2020 Andrew Gunnerson <chillermillerlong@hotmail.com> - 0.8-3
 - Change deprecated SUBDIRS= to M=
 - https://github.com/chenxiaolong/fedora-packages/issues/9
