@@ -77,6 +77,7 @@ Patch0100: 0001-ad-Add-support-for-passing-add-samba-data-to-adcli.patch
 ### Downstream only patches ###
 Patch0502: 0502-SYSTEMD-Use-capabilities.patch
 
+
 ### Dependencies ###
 
 Requires: sssd-common = %{version}-%{release}
@@ -1101,7 +1102,7 @@ fi
                                 %{_libdir}/%{name}/modules/libwbclient.so
 
 %changelog
-* Sat Mar 14 2020 Andrew Gunnerson <chillermillerlong@hotmail.com> - 2.2.3-13.1
+* Wed Apr 29 2020 Andrew Gunnerson <chillermillerlong@hotmail.com> - 2.2.3-13.1
 - Add support for passing --add-samba-data to adcli
 
 * Wed Feb 26 2020 Michal Židek <mzidek@redhat.com> - 2.2.3-13
@@ -1154,6 +1155,15 @@ fi
 - Update to latest released upstream version
 - https://docs.pagure.org/SSSD.sssd/users/relnotes/notes_2_2_3.htm
 
+* Fri Jan 31 2020 Fedora Release Engineering <releng@fedoraproject.org> - 2.2.2-6
+- Rebuilt for https://fedoraproject.org/wiki/Fedora_32_Mass_Rebuild
+
+* Fri Jan 24 2020 Stephen Gallagher <sgallagh@redhat.com> - 2.2.2-5
+- Fix build against samba-4.12.0rc1
+
+* Fri Jan 24 2020 Mohan Boddu <mboddu@bhujji.com> - 2.2.2-4
+- Rebuild for samba-4.12.0rc1
+
 * Tue Oct 22 2019 Adam Williamson <awilliam@redhat.com> - 2.2.2-3
 - Resolves: rhbz#1755643 - Upgrade to sssd 2.2.2-1.fc30 breaks setting
                            up FreeIPA replica in containers
@@ -1167,8 +1177,11 @@ fi
 - https://docs.pagure.org/SSSD.sssd/users/relnotes/notes_2_2_2.html
 - https://docs.pagure.org/SSSD.sssd/users/relnotes/notes_2_2_1.html
 
-* Tue Aug 27 2019 Mohan Boddu <mboddu@bhujji.com> - 2.2.0-5
+* Mon Aug 26 2019 Stephen Gallagher <sgallagh@redhat.com> - 2.2.0-6
 - Rebuilding for libldb 2.0.5
+
+* Mon Aug 19 2019 Miro Hrončok <mhroncok@redhat.com> - 2.2.0-5
+- Rebuilt for Python 3.8
 
 * Sat Jul 27 2019 Fedora Release Engineering <releng@fedoraproject.org> - 2.2.0-4
 - Rebuilt for https://fedoraproject.org/wiki/Fedora_31_Mass_Rebuild
