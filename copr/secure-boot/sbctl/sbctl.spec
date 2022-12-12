@@ -2,7 +2,7 @@
 #       golang dependencies from the internet during the build.
 
 Name:           sbctl
-Version:        0.9
+Version:        0.10
 Release:        1%{?dist}
 Summary:        Secure Boot key manager
 
@@ -64,6 +64,9 @@ fi
 
 
 %changelog
+* Mon Dec 12 2022 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.10-1
+- Update to version 0.10
+
 * Tue May 3 2022 Andrew Gunnerson <chillermillerlong@hotmail.com> - 0.9-1
 - Update to version 0.9
 
