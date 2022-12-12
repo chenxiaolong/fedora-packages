@@ -2,7 +2,7 @@
 #       golang dependencies from the internet during the build.
 
 Name:           sbctl
-Version:        0.8
+Version:        0.9
 Release:        1%{?dist}
 Summary:        Secure Boot key manager
 
@@ -64,5 +64,8 @@ fi
 
 
 %changelog
+* Tue May 3 2022 Andrew Gunnerson <chillermillerlong@hotmail.com> - 0.9-1
+- Update to version 0.9
+
 * Thu Jan 27 2022 Andrew Gunnerson <chillermillerlong@hotmail.com> - 0.8-1
 - Initial release
