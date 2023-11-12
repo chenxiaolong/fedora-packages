@@ -3,13 +3,12 @@
 
 Name:           sbctl
 Version:        0.12
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Secure Boot key manager
 
 License:        MIT
 URL:            https://github.com/Foxboron/sbctl
 Source0:        https://github.com/Foxboron/sbctl/releases/download/%{version}/sbctl-%{version}.tar.gz
-Source1:        91-sbctl.install
 
 ExclusiveArch:  %{golang_arches}
 
@@ -31,7 +30,6 @@ needs to be signed in the boot chain.
 %prep
 %setup -q
 sed -i '/go build/d' Makefile
-cp %{SOURCE1} contrib/kernel-install/91-sbctl.install
 
 
 %build
@@ -64,6 +62,9 @@ fi
 
 
 %changelog
+* Sun Nov 12 2023 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.12-2
+- Switch to upstream 91-sbctl.install kernel-install script
+
 * Fri Oct 20 2023 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.12-1
 - Update to version 0.12
 
