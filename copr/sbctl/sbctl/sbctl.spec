@@ -2,8 +2,8 @@
 #       golang dependencies from the internet during the build.
 
 Name:           sbctl
-Version:        0.12
-Release:        2%{?dist}
+Version:        0.13
+Release:        1%{?dist}
 Summary:        Secure Boot key manager
 
 License:        MIT
@@ -62,6 +62,9 @@ fi
 
 
 %changelog
+* Tue Dec 26 2023 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.13-1
+- Update to version 0.13
+
 * Sun Nov 12 2023 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.12-2
 - Switch to upstream 91-sbctl.install kernel-install script
 
