@@ -2,15 +2,13 @@
 #       golang dependencies from the internet during the build.
 
 Name:           sbctl
-Version:        0.15.3
+Version:        0.15.4
 Release:        1%{?dist}
 Summary:        Secure Boot key manager
 
 License:        MIT
 URL:            https://github.com/Foxboron/sbctl
 Source0:        https://github.com/Foxboron/sbctl/archive/refs/tags/%{version}.tar.gz
-Patch0:         https://github.com/Foxboron/sbctl/pull/341.patch
-Patch1:         https://github.com/Foxboron/sbctl/pull/342.patch
 
 ExclusiveArch:  %{golang_arches}
 
@@ -67,6 +65,9 @@ fi
 
 
 %changelog
+* Mon Aug 05 2024 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.15.4-1
+- Update to version 0.15.4
+
 * Wed Jul 31 2024 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.15.3-1
 - Update to version 0.15.3
 
