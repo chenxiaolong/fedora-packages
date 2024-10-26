@@ -3,7 +3,7 @@
 
 Name:           sbctl
 Version:        0.16
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Secure Boot key manager
 
 License:        MIT
@@ -44,7 +44,7 @@ export GOPATH=%{_builddir}/go
 
 
 %transfiletriggerin -P 1 -- /boot /efi /usr/lib /usr/libexec
-if grep -q -m 1 -e '\.efi$' -e '/vmlinuz$'; then
+if [[ ! -f /run/ostree-booted ]] && grep -q -m 1 -e '\.efi$' -e '/vmlinuz$'; then
     exec </dev/null
     %{_bindir}/sbctl sign-all -g
 fi
@@ -65,6 +65,9 @@ fi
 
 
 %changelog
+* Fri Oct 25 2024 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.16-2
+- Disable file triggers on ostree systems because keys are unavailable during layering
+
 * Fri Oct 18 2024 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.16-1
 - Update to version 0.16
 
