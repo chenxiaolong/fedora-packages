@@ -1,14 +1,19 @@
 # NOTE: This does not follow Fedora's golang packaging guidelines and downloads
 #       golang dependencies from the internet during the build.
 
+# https://gitlab.archlinux.org/archlinux/packaging/packages/sbctl/-/blob/main/PKGBUILD?ref_type=heads
+%global fingerprint C100346676634E80C940FB9E9C02FF419FECBE16
+
 Name:           sbctl
-Version:        0.16
-Release:        2%{?dist}
+Version:        0.17
+Release:        1%{?dist}
 Summary:        Secure Boot key manager
 
 License:        MIT
 URL:            https://github.com/Foxboron/sbctl
-Source0:        https://github.com/Foxboron/sbctl/archive/refs/tags/%{version}.tar.gz
+Source0:        https://github.com/Foxboron/sbctl/releases/download/%{version}/sbctl-%{version}.tar.gz
+Source1:        https://github.com/Foxboron/sbctl/releases/download/%{version}/sbctl-%{version}.tar.gz.sig
+Source2:        https://keyserver.ubuntu.com/pks/lookup?op=get&search=0x%{fingerprint}#/%{fingerprint}.gpg
 
 ExclusiveArch:  %{golang_arches}
 
@@ -28,6 +33,7 @@ needs to be signed in the boot chain.
 
 
 %prep
+%{gpgverify} --keyring='%{S:2}' --signature='%{S:1}' --data='%{S:0}'
 %autosetup -p1
 sed -i '/go build/d' Makefile
 
@@ -65,6 +71,10 @@ fi
 
 
 %changelog
+* Mon Apr 28 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.17-1
+- Update to version 0.17
+- Switch to using GPG-signed tarball
+
 * Fri Oct 25 2024 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.16-2
 - Disable file triggers on ostree systems because keys are unavailable during layering
 
