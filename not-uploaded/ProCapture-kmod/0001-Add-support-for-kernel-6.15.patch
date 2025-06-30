@@ -1,0 +1,194 @@
+From 17736ee48c1d558ee2b563ef5b12a1be499f21fe Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <accounts+github@chiller3.com>
+Date: Mon, 30 Jun 2025 14:07:40 -0400
+Subject: [PATCH] Add support for kernel 6.15
+
+This fixes incompatibilities in kbuild, timers, and v4l2 introduced in
+kernel 6.15. The upstream changes are:
+
+- e966ad0edd0056c7491b8f23992c11734ab61ddf
+    ("kbuild: remove EXTRA_*FLAGS support")
+- 8fa7292fee5c5240402371ea89ab285ec856c916
+    ("treewide: Switch/rename to timer_delete[_sync]()")
+- 0f6b05e069a7901f30ab0812beb8ee748a93a2a5
+    ("media: v4l2: Remove vidioc_queryctrl callback")
+- 70307f28ee617fdd9d3f941dd34fec2e91e14089
+    ("media: v4l2: Remove vidioc_g_ctrl callback")
+- 0d75129312ff59280c053b36e098c3ec89110ebb
+    ("media: v4l2: Remove vidioc_s_ctrl callback")
+
+Signed-off-by: Andrew Gunnerson <accounts+github@chiller3.com>
+---
+ src/Makefile                  |  4 +-
+ src/sources/avstream/v4l2.c   | 89 +++++++++++++++++++++++++++++++++++
+ src/sources/ospi/ospi-linux.c |  6 ++-
+ 3 files changed, 96 insertions(+), 3 deletions(-)
+
+diff --git a/src/Makefile b/src/Makefile
+index dc6277b..bfc2a43 100644
+--- a/src/Makefile
++++ b/src/Makefile
+@@ -17,9 +17,9 @@ ProCapture-objs += ProCaptureLib.o
+ 
+ obj-m = ProCapture.o
+ 
+-EXTRA_CFLAGS += -I$(src) -I$(src)/public -I$(src)/sources
++ccflags-y += -I$(src) -I$(src)/public -I$(src)/sources
+ # strip debug symbols
+-EXTRA_LDFLAGS += -S
++ldflags-y += -S
+ 
+ ifneq ($(KERNELRELEASE),)
+ KERNELDIR ?= /lib/modules/$(KERNELRELEASE)/build
+diff --git a/src/sources/avstream/v4l2.c b/src/sources/avstream/v4l2.c
+index d061a4a..7238187 100644
+--- a/src/sources/avstream/v4l2.c
++++ b/src/sources/avstream/v4l2.c
+@@ -958,6 +958,31 @@ static int vidioc_queryctrl(struct file *file, void *priv,
+     return -EINVAL;
+ }
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0))
++static int vidioc_query_ext_ctrl(struct file *file, void *priv,
++        struct v4l2_query_ext_ctrl *qec)
++{
++    struct v4l2_queryctrl qc = {0};
++    int ret;
++
++    ret = vidioc_queryctrl(file, priv, &qc);
++    if (ret) {
++        return ret;
++    }
++
++    qec->id = qc.id;
++    qec->type = qc.type;
++    strscpy(qec->name, qc.name, sizeof(qec->name));
++    qec->minimum = qc.minimum;
++    qec->maximum = qc.maximum;
++    qec->step = qc.step;
++    qec->default_value = qc.default_value;
++    qec->flags = qc.flags;
++
++    return 0;
++}
++#endif
++
+ static int vidioc_g_ctrl(struct file *file, void *priv,
+         struct v4l2_control *ctrl)
+ {
+@@ -986,6 +1011,32 @@ static int vidioc_g_ctrl(struct file *file, void *priv,
+     return ret;
+ }
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0))
++static int vidioc_g_ext_ctrls(struct file *file, void *priv,
++        struct v4l2_ext_controls *ext_ctrls)
++{
++    struct v4l2_control ctrl;
++    int ret;
++    int i;
++
++    for (i = 0; i < ext_ctrls->count; i++) {
++        ctrl.id = ext_ctrls->controls[i].id;
++        ctrl.value = ext_ctrls->controls[i].value;
++
++        ret = vidioc_g_ctrl(file, priv, &ctrl);
++
++        ext_ctrls->controls[i].value = ctrl.value;
++
++        if (ret) {
++            ext_ctrls->error_idx = i;
++            break;
++        }
++    }
++
++    return ret;
++}
++#endif
++
+ static int vidioc_s_ctrl(struct file *file, void *priv,
+         struct v4l2_control *ctrl)
+ {
+@@ -1023,6 +1074,32 @@ static int vidioc_s_ctrl(struct file *file, void *priv,
+     return ret;
+ }
+ 
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0))
++static int vidioc_s_ext_ctrls(struct file *file, void *priv,
++        struct v4l2_ext_controls *ext_ctrls)
++{
++    struct v4l2_control ctrl;
++    int ret;
++    int i;
++
++    for (i = 0; i < ext_ctrls->count; i++) {
++        ctrl.id = ext_ctrls->controls[i].id;
++        ctrl.value = ext_ctrls->controls[i].value;
++
++        ret = vidioc_s_ctrl(file, priv, &ctrl);
++
++        ext_ctrls->controls[i].value = ctrl.value;
++
++        if (ret) {
++            ext_ctrls->error_idx = i;
++            break;
++        }
++    }
++
++    return ret;
++}
++#endif
++
+ /* little value must put on top */
+ static struct v4l2_frmsize_discrete g_frmsize_array[] = {
+     { 640, 360 },
+@@ -1560,9 +1637,21 @@ static const struct v4l2_ioctl_ops xi_ioctl_ops = {
+     .vidioc_s_parm            = vidioc_s_parm,
+     .vidioc_streamon          = vidioc_streamon,
+     .vidioc_streamoff         = vidioc_streamoff,
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0))
++    .vidioc_query_ext_ctrl    = vidioc_query_ext_ctrl,
++#else
+     .vidioc_queryctrl         = vidioc_queryctrl,
++#endif
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0))
++    .vidioc_g_ext_ctrls       = vidioc_g_ext_ctrls,
++#else
+     .vidioc_g_ctrl            = vidioc_g_ctrl,
++#endif
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0))
++    .vidioc_s_ext_ctrls       = vidioc_s_ext_ctrls,
++#else
+     .vidioc_s_ctrl            = vidioc_s_ctrl,
++#endif
+     .vidioc_enum_framesizes   = vidioc_enum_framesizes,
+     .vidioc_enum_frameintervals
+                               = vidioc_enum_frameintervals,
+diff --git a/src/sources/ospi/ospi-linux.c b/src/sources/ospi/ospi-linux.c
+index 61e079c..f2e76b7 100644
+--- a/src/sources/ospi/ospi-linux.c
++++ b/src/sources/ospi/ospi-linux.c
+@@ -171,7 +171,7 @@ os_timer os_timer_alloc(timeout_func_t timeout_func, void *param)
+ 
+ void os_timer_free(os_timer timer)
+ {
+-    del_timer(&timer->k_timer);
++    os_timer_cancel(timer);
+     kfree(timer);
+ }
+ 
+@@ -189,7 +189,11 @@ void os_timer_schedule_relative(os_timer timer, uint32_t timeout_in_ms)
+ 
+ void os_timer_cancel(os_timer timer)
+ {
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++    timer_delete(&timer->k_timer);
++#else
+     del_timer(&timer->k_timer);
++#endif
+ }
+ 
+ 
+-- 
+2.50.0
+
