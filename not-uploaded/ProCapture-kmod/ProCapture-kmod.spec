@@ -5,14 +5,14 @@
 %global _archive_name ProCaptureForLinux
 
 Name:           %{_name}-kmod
-Version:        1.3.4418
-Release:        2%{?dist}
+Version:        1.3.4420
+Release:        1%{?dist}
 Summary:        Driver for Magewell Pro Capture Family
 
 License:        Proprietary
 URL:            https://www.magewell.com/downloads/pro-capture#/driver/linux-x86
 Source0:        https://www.magewell.com/files/drivers/%{_archive_name}_%{version}.tar.gz
-Patch0:         0001-Add-support-for-kernel-6.15.patch
+Patch0:         0001-Wrap-deprecated-v4l2-callbacks-instead-of-removing-t.patch
 
 BuildRequires:  kmodtool
 BuildRequires:  systemd-rpm-macros
@@ -102,6 +102,10 @@ popd
 
 
 %changelog
+* Tue Jul 01 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4420-1
+- Update to 1.3.4420
+- Reintroduce removed v4l2 callbacks via wrappers
+
 * Mon Jun 30 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4418-2
 - Add support for kernel 6.15
 
