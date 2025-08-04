@@ -1,8 +1,8 @@
 From 927b4a033e6837e2a33bd2706a81099e39ee9b59 Mon Sep 17 00:00:00 2001
 From: Andrew Gunnerson <accounts+github@chiller3.com>
 Date: Tue, 1 Jul 2025 18:24:19 -0400
-Subject: [PATCH] Wrap deprecated v4l2 callbacks instead of removing them for
- 6.15
+Subject: [PATCH 1/2] Wrap deprecated v4l2 callbacks instead of removing them
+ for 6.15
 
 These callbacks were removed in upstream commits:
 
@@ -132,5 +132,5 @@ index 4c20c5e..4ded0a8 100644
      .vidioc_enum_framesizes   = vidioc_enum_framesizes,
      .vidioc_enum_frameintervals
 -- 
-2.50.0
+2.50.1
 

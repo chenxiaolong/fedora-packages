@@ -6,13 +6,14 @@
 
 Name:           %{_name}-kmod
 Version:        1.3.4420
-Release:        1%{?dist}
+Release:        2%{?dist}
 Summary:        Driver for Magewell Pro Capture Family
 
 License:        Proprietary
 URL:            https://www.magewell.com/downloads/pro-capture#/driver/linux-x86
 Source0:        https://www.magewell.com/files/drivers/%{_archive_name}_%{version}.tar.gz
 Patch0:         0001-Wrap-deprecated-v4l2-callbacks-instead-of-removing-t.patch
+Patch1:         0002-Use-timer_container_of-on-6.16.patch
 
 BuildRequires:  kmodtool
 BuildRequires:  systemd-rpm-macros
@@ -42,6 +43,7 @@ kmodtool --target %{_target_cpu} --repo rpmfusion --kmodname %{_name} %{?buildfo
 %setup -q -c
 
 %patch -P0 -p1 -d %{_archive_name}_%{version}
+%patch -P1 -p1 -d %{_archive_name}_%{version}
 
 for kernel_version in %{?kernel_versions}; do
   cp -a %{_archive_name}_%{version}/src _kmod_build_${kernel_version%%___*}
@@ -102,6 +104,9 @@ popd
 
 
 %changelog
+* Mon Aug 04 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4420-2
+- Add support for kernel 6.16
+
 * Tue Jul 01 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4420-1
 - Update to 1.3.4420
 - Reintroduce removed v4l2 callbacks via wrappers
