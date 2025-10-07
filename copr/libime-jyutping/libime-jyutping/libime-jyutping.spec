@@ -3,7 +3,7 @@
 %global fingerprint 2cc8a0609ad2a479c65b6d5c8e8b898cbf2412f9
 
 Name:           libime-jyutping
-Version:        1.0.12
+Version:        1.0.14
 Release:        1%{?dist}
 Summary:        An implementation of jyutping (粵拼) via libime
 
@@ -111,5 +111,8 @@ fcitx5 input method based on %{name}.
 
 
 %changelog
+* Sat Aug 09 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.0.14-1
+- Update to 1.0.14
+
 * Wed Dec 25 2024 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.0.12-1
 - Initial release
