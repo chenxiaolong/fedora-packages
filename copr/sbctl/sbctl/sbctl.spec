@@ -5,7 +5,7 @@
 %global fingerprint C100346676634E80C940FB9E9C02FF419FECBE16
 
 Name:           sbctl
-Version:        0.17
+Version:        0.18
 Release:        1%{?dist}
 Summary:        Secure Boot key manager
 
@@ -25,6 +25,7 @@ Recommends:     systemd-udev
 BuildRequires:  asciidoc
 BuildRequires:  git
 BuildRequires:  go-rpm-macros
+BuildRequires:  pkgconfig(libpcsclite)
 
 %description
 sbctl intends to be a user-friendly secure boot key manager capable of setting
@@ -35,7 +36,12 @@ needs to be signed in the boot chain.
 %prep
 %{gpgverify} --keyring='%{S:2}' --signature='%{S:1}' --data='%{S:0}'
 %autosetup -p1
-sed -i '/go build/d' Makefile
+
+sed -i.orig '/go build/d' Makefile
+! diff -q Makefile.orig Makefile
+
+sed -i.orig '/libpcsclite_real\.so\.1/ s,/usr/lib,%{_libdir},' lsm/lsm.go
+! diff -q lsm/lsm.go.orig lsm/lsm.go
 
 
 %build
@@ -47,6 +53,9 @@ export GOPATH=%{_builddir}/go
 
 %install
 %make_install PREFIX=%{_prefix}
+
+# Debian only.
+rm %{buildroot}%{_prefix}/lib/kernel/postinst.d/91-sbctl.install
 
 
 %transfiletriggerin -P 1 -- /boot /efi /usr/lib /usr/libexec
@@ -71,6 +80,9 @@ fi
 
 
 %changelog
+* Tue Oct 07 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.18-1
+- Update to version 0.18
+
 * Mon Apr 28 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 0.17-1
 - Update to version 0.17
 - Switch to using GPG-signed tarball
