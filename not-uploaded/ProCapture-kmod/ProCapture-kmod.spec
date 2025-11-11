@@ -2,16 +2,18 @@
 %global debug_package %{nil}
 
 %global _name ProCapture
-%global _archive_name ProCaptureForLinuxPUBLIC
+%global _archive_name ProCaptureForLinux
 
 Name:           %{_name}-kmod
-Version:        1.3.4490
-Release:        1%{?dist}
+Version:        1.3.4420
+Release:        2%{?dist}
 Summary:        Driver for Magewell Pro Capture Family
 
 License:        Proprietary
 URL:            https://www.magewell.com/downloads/pro-capture#/driver/linux-x86
 Source0:        https://www.magewell.com/files/drivers/%{_archive_name}_%{version}.tar.gz
+Patch0:         0001-Wrap-deprecated-v4l2-callbacks-instead-of-removing-t.patch
+Patch1:         0002-Use-timer_container_of-on-6.16.patch
 
 BuildRequires:  kmodtool
 BuildRequires:  systemd-rpm-macros
@@ -39,6 +41,9 @@ This package contains the supporting utilities for the ProCapture kernel module.
 kmodtool --target %{_target_cpu} --repo rpmfusion --kmodname %{_name} %{?buildforkernels:--%{buildforkernels}} %{?kernels:--for-kernels "%{?kernels}"} 2>/dev/null
 
 %setup -q -c
+
+%patch -P0 -p1 -d %{_archive_name}_%{version}
+%patch -P1 -p1 -d %{_archive_name}_%{version}
 
 for kernel_version in %{?kernel_versions}; do
   cp -a %{_archive_name}_%{version}/src _kmod_build_${kernel_version%%___*}
@@ -99,9 +104,6 @@ popd
 
 
 %changelog
-* Fri Nov 07 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4490-1
-- Update to 1.3.4490
-
 * Mon Aug 04 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4420-2
 - Add support for kernel 6.16
 

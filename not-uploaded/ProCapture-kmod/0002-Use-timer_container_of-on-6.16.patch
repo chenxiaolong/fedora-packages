@@ -1,0 +1,34 @@
+From 47a8b99d715f213198e9fda90bf0e484ee2751fa Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <accounts+github@chiller3.com>
+Date: Mon, 4 Aug 2025 00:21:55 -0400
+Subject: [PATCH 2/2] Use timer_container_of() on 6.16
+
+The function was renamed in upstream commit:
+
+* 41cb08555c4164996d67c78b3bf1c658075b75f1
+    ("treewide, timers: Rename from_timer() to timer_container_of()")
+
+Signed-off-by: Andrew Gunnerson <accounts+github@chiller3.com>
+---
+ src/sources/ospi/ospi-linux.c | 4 ++++
+ 1 file changed, 4 insertions(+)
+
+diff --git a/src/sources/ospi/ospi-linux.c b/src/sources/ospi/ospi-linux.c
+index 69ce462..e06cac1 100644
+--- a/src/sources/ospi/ospi-linux.c
++++ b/src/sources/ospi/ospi-linux.c
+@@ -143,7 +143,11 @@ static void __os_timer_callback_wrapper(unsigned long param)
+ #else
+ static void __os_timer_callback_wrapper(struct timer_list *t)
+ {
++#if (LINUX_VERSION_CODE >= KERNEL_VERSION(6, 16, 0))
++    os_timer timer = timer_container_of(timer, t, k_timer);
++#else
+     os_timer timer = from_timer(timer, t, k_timer);
++#endif
+ 
+     if (timer && timer->func)
+         timer->func(timer->param);
+-- 
+2.50.1
+

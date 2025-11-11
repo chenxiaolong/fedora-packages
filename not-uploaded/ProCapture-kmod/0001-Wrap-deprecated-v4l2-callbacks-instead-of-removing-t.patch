@@ -1,0 +1,136 @@
+From 927b4a033e6837e2a33bd2706a81099e39ee9b59 Mon Sep 17 00:00:00 2001
+From: Andrew Gunnerson <accounts+github@chiller3.com>
+Date: Tue, 1 Jul 2025 18:24:19 -0400
+Subject: [PATCH 1/2] Wrap deprecated v4l2 callbacks instead of removing them
+ for 6.15
+
+These callbacks were removed in upstream commits:
+
+- 0f6b05e069a7901f30ab0812beb8ee748a93a2a5
+    ("media: v4l2: Remove vidioc_queryctrl callback")
+- 70307f28ee617fdd9d3f941dd34fec2e91e14089
+    ("media: v4l2: Remove vidioc_g_ctrl callback")
+- 0d75129312ff59280c053b36e098c3ec89110ebb
+    ("media: v4l2: Remove vidioc_s_ctrl callback")
+
+Signed-off-by: Andrew Gunnerson <accounts+github@chiller3.com>
+---
+ src/sources/avstream/v4l2.c | 81 +++++++++++++++++++++++++++++++++++++
+ 1 file changed, 81 insertions(+)
+
+diff --git a/src/sources/avstream/v4l2.c b/src/sources/avstream/v4l2.c
+index 4c20c5e..4ded0a8 100644
+--- a/src/sources/avstream/v4l2.c
++++ b/src/sources/avstream/v4l2.c
+@@ -958,6 +958,31 @@ static int vidioc_queryctrl(struct file *file, void *priv,
+     return -EINVAL;
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++static int vidioc_query_ext_ctrl(struct file *file, void *priv,
++        struct v4l2_query_ext_ctrl *qec)
++{
++    struct v4l2_queryctrl qc = {0};
++    int ret;
++
++    ret = vidioc_queryctrl(file, priv, &qc);
++    if (ret) {
++        return ret;
++    }
++
++    qec->id = qc.id;
++    qec->type = qc.type;
++    strscpy(qec->name, qc.name, sizeof(qec->name));
++    qec->minimum = qc.minimum;
++    qec->maximum = qc.maximum;
++    qec->step = qc.step;
++    qec->default_value = qc.default_value;
++    qec->flags = qc.flags;
++
++    return 0;
++}
++#endif
++
+ static int vidioc_g_ctrl(struct file *file, void *priv,
+         struct v4l2_control *ctrl)
+ {
+@@ -986,6 +1011,32 @@ static int vidioc_g_ctrl(struct file *file, void *priv,
+     return ret;
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++static int vidioc_g_ext_ctrls(struct file *file, void *priv,
++        struct v4l2_ext_controls *ext_ctrls)
++{
++    struct v4l2_control ctrl;
++    int ret;
++    int i;
++
++    for (i = 0; i < ext_ctrls->count; i++) {
++        ctrl.id = ext_ctrls->controls[i].id;
++        ctrl.value = ext_ctrls->controls[i].value;
++
++        ret = vidioc_g_ctrl(file, priv, &ctrl);
++
++        ext_ctrls->controls[i].value = ctrl.value;
++
++        if (ret) {
++            ext_ctrls->error_idx = i;
++            break;
++        }
++    }
++
++    return ret;
++}
++#endif
++
+ static int vidioc_s_ctrl(struct file *file, void *priv,
+         struct v4l2_control *ctrl)
+ {
+@@ -1023,6 +1074,32 @@ static int vidioc_s_ctrl(struct file *file, void *priv,
+     return ret;
+ }
+ 
++#if LINUX_VERSION_CODE >= KERNEL_VERSION(6, 15, 0)
++static int vidioc_s_ext_ctrls(struct file *file, void *priv,
++        struct v4l2_ext_controls *ext_ctrls)
++{
++    struct v4l2_control ctrl;
++    int ret;
++    int i;
++
++    for (i = 0; i < ext_ctrls->count; i++) {
++        ctrl.id = ext_ctrls->controls[i].id;
++        ctrl.value = ext_ctrls->controls[i].value;
++
++        ret = vidioc_s_ctrl(file, priv, &ctrl);
++
++        ext_ctrls->controls[i].value = ctrl.value;
++
++        if (ret) {
++            ext_ctrls->error_idx = i;
++            break;
++        }
++    }
++
++    return ret;
++}
++#endif
++
+ /* little value must put on top */
+ static struct v4l2_frmsize_discrete g_frmsize_array[] = {
+     { 640, 360 },
+@@ -1564,6 +1641,10 @@ static const struct v4l2_ioctl_ops xi_ioctl_ops = {
+     .vidioc_queryctrl         = vidioc_queryctrl,
+     .vidioc_g_ctrl            = vidioc_g_ctrl,
+     .vidioc_s_ctrl            = vidioc_s_ctrl,
++#else
++    .vidioc_query_ext_ctrl    = vidioc_query_ext_ctrl,
++    .vidioc_g_ext_ctrls       = vidioc_g_ext_ctrls,
++    .vidioc_s_ext_ctrls       = vidioc_s_ext_ctrls,
+ #endif
+     .vidioc_enum_framesizes   = vidioc_enum_framesizes,
+     .vidioc_enum_frameintervals
+-- 
+2.50.1
+
