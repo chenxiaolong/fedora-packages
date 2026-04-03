@@ -99,7 +99,7 @@ popd
 
 
 %changelog
-* Tue Jan 13 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4429-1
+* Tue Jan 13 2026 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4429-1
 - Update to 1.3.4429
 
 * Mon Aug 04 2025 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4420-2
