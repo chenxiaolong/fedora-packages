@@ -1,4 +1,4 @@
-# Fedora Package
+# Fedora Packages
 
 This repo contains a collection of RPM specs for some packages I maintain or use.
 
