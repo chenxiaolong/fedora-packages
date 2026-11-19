@@ -5,7 +5,7 @@
 %global _archive_name ProCaptureForLinux
 
 Name:           %{_name}-kmod
-Version:        1.3.4429
+Version:        1.3.4458
 Release:        1%{?dist}
 Summary:        Driver for Magewell Pro Capture Family
 
@@ -99,6 +99,9 @@ popd
 
 
 %changelog
+* Thu Nov 19 2026 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4458-1
+- Update to 1.3.4458
+
 * Tue Jan 13 2026 Andrew Gunnerson <accounts+fedora@chiller3.com> - 1.3.4429-1
 - Update to 1.3.4429
 
